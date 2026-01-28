@@ -15,30 +15,14 @@ const COLORS = {
     alternative: '#ef4444',
 };
 
-const TYPE_LABELS = {
-    equity: 'หุ้น',
-    'fixed-income': 'ตราสารหนี้',
-    property: 'อสังหาริมทรัพย์',
-    alternative: 'ทางเลือก',
-};
-
 export default function AllocationChart({ funds }: AllocationChartProps) {
-    // Group by type
-    const allocationByType = funds.reduce((acc, fund) => {
-        const existing = acc.find((item) => item.type === fund.type);
-        if (existing) {
-            existing.value += fund.allocation;
-            existing.amount += fund.value;
-        } else {
-            acc.push({
-                type: fund.type,
-                name: TYPE_LABELS[fund.type as keyof typeof TYPE_LABELS],
-                value: fund.allocation,
-                amount: fund.value,
-            });
-        }
-        return acc;
-    }, [] as Array<{ type: string; name: string; value: number; amount: number }>);
+    // Use individual funds instead of grouping by type
+    const allocationData = funds.map((fund) => ({
+        name: fund.name,
+        type: fund.type,
+        value: fund.allocation,
+        amount: fund.value,
+    }));
 
     const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { amount: number } }> }) => {
         if (active && payload && payload.length) {
@@ -69,7 +53,7 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
             <ResponsiveContainer width="100%" height={300}>
                 <PieChart>
                     <Pie
-                        data={allocationByType}
+                        data={allocationData}
                         cx="50%"
                         cy="50%"
                         labelLine={false}
@@ -78,7 +62,7 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
                         fill="#8884d8"
                         dataKey="value"
                     >
-                        {allocationByType.map((entry, index) => (
+                        {allocationData.map((entry, index) => (
                             <Cell key={`cell-${index}`} fill={COLORS[entry.type as keyof typeof COLORS]} />
                         ))}
                     </Pie>
@@ -87,8 +71,8 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
             </ResponsiveContainer>
 
             <div className="mt-6 grid grid-cols-2 gap-3">
-                {allocationByType.map((item) => (
-                    <div key={item.type} className="flex items-center gap-2">
+                {allocationData.map((item) => (
+                    <div key={item.name} className="flex items-center gap-2">
                         <div
                             className="w-3 h-3 rounded-full"
                             style={{ backgroundColor: COLORS[item.type as keyof typeof COLORS] }}
