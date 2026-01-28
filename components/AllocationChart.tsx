@@ -57,7 +57,33 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
                         cx="50%"
                         cy="50%"
                         labelLine={false}
-                        outerRadius={100}
+                        label={({ cx, cy, midAngle, innerRadius, outerRadius, name, value }) => {
+                            const RADIAN = Math.PI / 180;
+                            const radius = outerRadius + 25;
+                            const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                            const y = cy + radius * Math.sin(-midAngle * RADIAN);
+
+                            // Split name into 2 lines if needed
+                            const words = name.split('');
+                            const line1 = words.slice(0, Math.ceil(words.length / 2)).join('');
+                            const line2 = words.slice(Math.ceil(words.length / 2)).join('');
+
+                            return (
+                                <text
+                                    x={x}
+                                    y={y}
+                                    fill="var(--text-primary)"
+                                    textAnchor={x > cx ? 'start' : 'end'}
+                                    dominantBaseline="central"
+                                    fontSize="11"
+                                >
+                                    <tspan x={x} dy="-0.6em">{line1}</tspan>
+                                    <tspan x={x} dy="1.2em">{line2}</tspan>
+                                    <tspan x={x} dy="1.2em" fontWeight="bold">{value.toFixed(1)}%</tspan>
+                                </text>
+                            );
+                        }}
+                        outerRadius={80}
                         fill="#8884d8"
                         dataKey="value"
                     >
