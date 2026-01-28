@@ -47,7 +47,26 @@ export async function fetchMarketData(): Promise<MarketData> {
 
 export async function fetchPortfolioData() {
     try {
+        // Check for custom data in localStorage
+        let customData = null;
+        if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('gpf_portfolio_data');
+            if (stored) {
+                customData = stored;
+            }
+        }
+
+        const headers: HeadersInit = {
+            'Content-Type': 'application/json',
+        };
+
+        // Add custom data to headers if available
+        if (customData) {
+            headers['x-custom-portfolio'] = customData;
+        }
+
         const response = await fetch('/api/portfolio', {
+            headers,
             next: { revalidate: 60 } // Cache for 1 minute
         });
 

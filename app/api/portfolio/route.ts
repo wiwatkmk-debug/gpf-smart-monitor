@@ -1,10 +1,33 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { mockPortfolio, mockHistoricalData } from '@/lib/mockData';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
-        // Return portfolio data from mockData.ts
-        // In the future, this could fetch from a database
+        // Check if custom data is provided via request header
+        const customDataHeader = request.headers.get('x-custom-portfolio');
+
+        if (customDataHeader) {
+            try {
+                const customData = JSON.parse(customDataHeader);
+
+                // Build portfolio from custom data
+                const portfolio = {
+                    ...mockPortfolio,
+                    funds: customData.funds,
+                    totalValue: customData.totalValue,
+                };
+
+                return NextResponse.json({
+                    portfolio,
+                    historical: mockHistoricalData,
+                });
+            } catch (parseError) {
+                console.error('Error parsing custom data:', parseError);
+                // Fall through to default data
+            }
+        }
+
+        // Return default portfolio data from mockData.ts
         const portfolioData = {
             portfolio: mockPortfolio,
             historical: mockHistoricalData,
