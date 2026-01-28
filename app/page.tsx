@@ -170,12 +170,7 @@ export default function Home() {
         </div>
 
         {/* Retirement Planner */}
-        <RetirementPlanner
-          currentValue={portfolio.totalValue}
-          monthlyContribution={10000}
-          currentAge={35}
-          retirementAge={60}
-        />
+        <RetirementPlanner />
       </div>
     </div>
   );

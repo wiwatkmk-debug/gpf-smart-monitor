@@ -33,11 +33,12 @@ export interface HistoricalData {
 export interface MarketIndicator {
     id: string;
     name: string;
-    symbol: string;
+    symbol?: string;
     value: number;
     change: number;
     changePercent: number;
-    lastUpdated: Date;
+    lastUpdated?: Date;
+    icon?: string;
 }
 
 export interface RebalancingRecommendation {

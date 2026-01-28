@@ -69,17 +69,21 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
-                    className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
+                    className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${isDragging ? 'border-primary bg-primary/10' : 'border-gray-300'
                         }`}
                     style={{ borderColor: isDragging ? 'var(--primary)' : 'var(--border-color)' }}
                 >
-                    <div className="mb-4">
+                    <div className="mb-2">
                         <svg
-                            className="mx-auto h-12 w-12"
+                            className="mx-auto"
+                            style={{
+                                width: '32px',
+                                height: '32px',
+                                color: 'var(--text-secondary)'
+                            }}
                             stroke="currentColor"
                             fill="none"
                             viewBox="0 0 48 48"
-                            style={{ color: 'var(--text-secondary)' }}
                         >
                             <path
                                 d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02"
@@ -89,14 +93,14 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                             />
                         </svg>
                     </div>
-                    <p className="mb-2" style={{ color: 'var(--text-primary)' }}>
+                    <p className="mb-1 text-sm" style={{ color: 'var(--text-primary)' }}>
                         ลากไฟล์มาวางที่นี่
                     </p>
-                    <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
                         หรือ
                     </p>
                     <label className="cursor-pointer">
-                        <span className="px-4 py-2 bg-primary text-white rounded-lg inline-block hover:opacity-90 transition-opacity">
+                        <span className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg inline-block hover:opacity-90 transition-opacity">
                             เลือกไฟล์
                         </span>
                         <input
@@ -106,7 +110,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                             onChange={handleFileInput}
                         />
                     </label>
-                    <p className="text-xs mt-4" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
                         รองรับ: PNG, JPG, JPEG
                     </p>
                 </div>
