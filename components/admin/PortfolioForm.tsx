@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import ImageUpload from './ImageUpload';
+import { extractDataFromImage } from '@/lib/image-processor';
 import type { Fund } from '@/types/portfolio';
 
 interface PortfolioFormProps {
@@ -15,6 +16,8 @@ interface PortfolioFormProps {
 export default function PortfolioForm({ initialData, initialDataDate, onSave, onCancel }: PortfolioFormProps) {
     const [dataDate, setDataDate] = useState<string>(initialDataDate || new Date().toISOString().split('T')[0]);
     const [uploadedImage, setUploadedImage] = useState<string>('');
+    const [isExtracting, setIsExtracting] = useState(false);
+    const [extractError, setExtractError] = useState<string>('');
     const [funds, setFunds] = useState<Fund[]>(initialData || [
         {
             id: 'gpf-fix-income',
@@ -102,6 +105,58 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
         return { funds: fundsWithAllocation, totalValue };
     };
 
+    const handleExtractData = async () => {
+        if (!uploadedImage) {
+            setExtractError('กรุณาอัพโหลดภาพก่อน');
+            return;
+        }
+
+        setIsExtracting(true);
+        setExtractError('');
+
+        try {
+            const extractedData = await extractDataFromImage(uploadedImage);
+
+            // Map extracted data to funds
+            const fundMapping: { [key: string]: string } = {
+                'แผนตราสารหนี้': 'gpf-fix-income',
+                'แผนหุ้นไทย': 'gpf-eq-th',
+                'แผนหุ้นต่างประเทศ': 'gpf-eq-global',
+                'แผนทองคำ': 'gpf-gold',
+            };
+
+            const updatedFunds = funds.map(fund => {
+                const extractedFund = extractedData.funds.find(
+                    ef => fundMapping[ef.name] === fund.id
+                );
+
+                if (extractedFund) {
+                    return {
+                        ...fund,
+                        value: extractedFund.value,
+                        units: extractedFund.units,
+                        navPerUnit: extractedFund.navPerUnit,
+                    };
+                }
+
+                return fund;
+            });
+
+            setFunds(updatedFunds);
+
+            // Update date if found
+            if (extractedData.dataDate) {
+                setDataDate(extractedData.dataDate);
+            }
+
+            setIsExtracting(false);
+        } catch (error) {
+            console.error('Error extracting data:', error);
+            setExtractError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการอ่านข้อมูล');
+            setIsExtracting(false);
+        }
+    };
+
     const handleSave = () => {
         const { funds: updatedFunds, totalValue } = calculateTotals();
         onSave(updatedFunds, totalValue, dataDate);
@@ -135,6 +190,38 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
                 onImageUpload={setUploadedImage}
                 currentImage={uploadedImage}
             />
+
+            {/* Extract Button */}
+            {uploadedImage && (
+                <Card>
+                    <button
+                        onClick={handleExtractData}
+                        disabled={isExtracting}
+                        className="w-full px-6 py-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg font-bold text-lg hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center gap-2"
+                    >
+                        {isExtracting ? (
+                            <>
+                                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                                กำลังอ่านข้อมูล...
+                            </>
+                        ) : (
+                            <>
+                                🤖 อ่านข้อมูลอัตโนมัติ
+                            </>
+                        )}
+                    </button>
+                    {extractError && (
+                        <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <p className="text-red-500 text-sm">❌ {extractError}</p>
+                        </div>
+                    )}
+                    {!isExtracting && !extractError && (
+                        <p className="mt-3 text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+                            💡 คลิกเพื่อให้ AI อ่านข้อมูลจากภาพและกรอกให้อัตโนมัติ
+                        </p>
+                    )}
+                </Card>
+            )}
 
             {/* Portfolio Form */}
             <Card>
