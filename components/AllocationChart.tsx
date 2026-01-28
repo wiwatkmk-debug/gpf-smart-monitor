@@ -28,13 +28,13 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
         const existing = acc.find((item) => item.type === fund.type);
         if (existing) {
             existing.value += fund.allocation;
-            existing.amount += fund.currentValue;
+            existing.amount += fund.value;
         } else {
             acc.push({
                 type: fund.type,
                 name: TYPE_LABELS[fund.type as keyof typeof TYPE_LABELS],
                 value: fund.allocation,
-                amount: fund.currentValue,
+                amount: fund.value,
             });
         }
         return acc;
