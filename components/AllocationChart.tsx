@@ -63,10 +63,26 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
                             const x = cx + radius * Math.cos(-midAngle * RADIAN);
                             const y = cy + radius * Math.sin(-midAngle * RADIAN);
 
-                            // Split name into 2 lines if needed
-                            const words = name.split('');
-                            const line1 = words.slice(0, Math.ceil(words.length / 2)).join('');
-                            const line2 = words.slice(Math.ceil(words.length / 2)).join('');
+                            // Split Thai fund names properly
+                            let line1 = '';
+                            let line2 = '';
+
+                            if (name === 'แผนตราสารหนี้') {
+                                line1 = 'แผน';
+                                line2 = 'ตราสารหนี้';
+                            } else if (name === 'แผนหุ้นไทย') {
+                                line1 = 'แผน';
+                                line2 = 'หุ้นไทย';
+                            } else if (name === 'แผนหุ้นต่างประเทศ') {
+                                line1 = 'แผนหุ้น';
+                                line2 = 'ต่างประเทศ';
+                            } else if (name === 'แผนทองคำ') {
+                                line1 = 'แผน';
+                                line2 = 'ทองคำ';
+                            } else {
+                                line1 = name;
+                                line2 = '';
+                            }
 
                             return (
                                 <text
@@ -78,7 +94,7 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
                                     fontSize="11"
                                 >
                                     <tspan x={x} dy="-0.6em">{line1}</tspan>
-                                    <tspan x={x} dy="1.2em">{line2}</tspan>
+                                    {line2 && <tspan x={x} dy="1.2em">{line2}</tspan>}
                                     <tspan x={x} dy="1.2em" fontWeight="bold">{value.toFixed(1)}%</tspan>
                                 </text>
                             );
