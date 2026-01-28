@@ -48,11 +48,12 @@ export async function fetchMarketData(): Promise<MarketData> {
 export async function fetchPortfolioData() {
     try {
         // Check for custom data in localStorage
-        let customData = null;
+        let customDataEncoded = null;
         if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('gpf_portfolio_data');
             if (stored) {
-                customData = stored;
+                // Encode to base64 to support Thai characters in headers
+                customDataEncoded = btoa(unescape(encodeURIComponent(stored)));
             }
         }
 
@@ -61,8 +62,8 @@ export async function fetchPortfolioData() {
         };
 
         // Add custom data to headers if available
-        if (customData) {
-            headers['x-custom-portfolio'] = customData;
+        if (customDataEncoded) {
+            headers['x-custom-portfolio'] = customDataEncoded;
         }
 
         const response = await fetch('/api/portfolio', {

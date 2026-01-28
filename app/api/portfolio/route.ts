@@ -8,7 +8,9 @@ export async function GET(request: NextRequest) {
 
         if (customDataHeader) {
             try {
-                const customData = JSON.parse(customDataHeader);
+                // Decode from base64 (supports Thai characters)
+                const decoded = decodeURIComponent(escape(atob(customDataHeader)));
+                const customData = JSON.parse(decoded);
 
                 // Build portfolio from custom data
                 const portfolio = {
