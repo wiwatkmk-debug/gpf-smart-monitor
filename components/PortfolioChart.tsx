@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { HistoricalData } from '@/types/portfolio';
 import Card from './ui/Card';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 interface PortfolioChartProps {
     data: HistoricalData[];
@@ -30,15 +30,15 @@ export default function PortfolioChart({ data }: PortfolioChartProps) {
 
     const filteredData = getFilteredData();
 
-    const CustomTooltip = ({ active, payload }: any) => {
+    const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { date: string }; value: number }> }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="glass p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)' }}>
-                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <div className="glass" style={{ padding: '12px', borderRadius: '8px' }}>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px' }}>
                         {payload[0].payload.date}
                     </p>
-                    <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                        ฿{payload[0].value.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
+                    <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        ฿{payload[0].value.toLocaleString('th-TH')}
                     </p>
                 </div>
             );
@@ -58,8 +58,8 @@ export default function PortfolioChart({ data }: PortfolioChartProps) {
                             key={period}
                             onClick={() => setSelectedPeriod(period)}
                             className={`px-3 py-1 rounded-lg text-sm font-medium transition-all ${selectedPeriod === period
-                                    ? 'bg-gradient-primary text-white'
-                                    : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                                ? 'bg-gradient-primary text-white'
+                                : 'hover:bg-gray-100 dark:hover:bg-gray-800'
                                 }`}
                             style={
                                 selectedPeriod !== period

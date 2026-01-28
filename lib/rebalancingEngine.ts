@@ -8,8 +8,6 @@ interface RebalancingInput {
 
 // Target allocation based on age and risk profile
 function getTargetAllocation(input: RebalancingInput): Record<string, number> {
-    const yearsToRetirement = input.retirementAge - input.currentAge;
-
     // Base allocation on years to retirement
     let equityPercent = 100 - input.currentAge; // Rule of thumb: 100 - age
 
@@ -52,7 +50,6 @@ export function generateRebalancingRecommendations(
     funds.forEach(fund => {
         const targetForType = targetAllocation[fund.type] || 0;
         const currentForType = currentByType[fund.type] || 0;
-        const difference = targetForType - currentForType;
 
         // Calculate proportional adjustment for this fund within its type
         const fundsOfSameType = funds.filter(f => f.type === fund.type);

@@ -1,6 +1,6 @@
 import { PortfolioData } from '@/types/portfolio';
 import StatCard from './ui/StatCard';
-import { Wallet, TrendingUp, PiggyBank, Clock } from 'lucide-react';
+import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 

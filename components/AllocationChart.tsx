@@ -2,7 +2,7 @@
 
 import { Fund } from '@/types/portfolio';
 import Card from './ui/Card';
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 
 interface AllocationChartProps {
     funds: Fund[];
@@ -28,28 +28,28 @@ export default function AllocationChart({ funds }: AllocationChartProps) {
         const existing = acc.find((item) => item.type === fund.type);
         if (existing) {
             existing.value += fund.allocation;
-            existing.amount += fund.value;
+            existing.amount += fund.currentValue;
         } else {
             acc.push({
                 type: fund.type,
-                name: TYPE_LABELS[fund.type],
+                name: TYPE_LABELS[fund.type as keyof typeof TYPE_LABELS],
                 value: fund.allocation,
-                amount: fund.value,
+                amount: fund.currentValue,
             });
         }
         return acc;
     }, [] as Array<{ type: string; name: string; value: number; amount: number }>);
 
-    const CustomTooltip = ({ active, payload }: any) => {
+    const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ name: string; value: number; payload: { amount: number } }> }) => {
         if (active && payload && payload.length) {
             const data = payload[0].payload;
             return (
                 <div className="glass p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)' }}>
                     <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                        {data.name}
+                        {payload[0].name}
                     </p>
                     <p className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                        {data.value.toFixed(1)}%
+                        {payload[0].value.toFixed(1)}%
                     </p>
                     <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                         ฿{data.amount.toLocaleString('th-TH', { maximumFractionDigits: 0 })}

@@ -3,15 +3,15 @@
 import { useState } from 'react';
 import Card from './ui/Card';
 import { calculateRetirementProjection, getRetirementAdvice } from '@/lib/retirementCalculator';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Target, TrendingUp } from 'lucide-react';
 
 export default function RetirementPlanner() {
     const [currentAge, setCurrentAge] = useState(35);
     const [retirementAge, setRetirementAge] = useState(60);
-    const [currentSavings, setCurrentSavings] = useState(3571429);
+    const [currentSavings, setCurrentSavings] = useState(500000);
     const [monthlyContribution, setMonthlyContribution] = useState(10000);
-    const [expectedReturn, setExpectedReturn] = useState(7);
+    const expectedReturn = 7;
 
     const plan = calculateRetirementProjection({
         currentAge,
@@ -23,15 +23,15 @@ export default function RetirementPlanner() {
 
     const advice = getRetirementAdvice(plan.readinessScore);
 
-    const CustomTooltip = ({ active, payload }: any) => {
+    const CustomTooltip = ({ active, payload }: { active?: boolean; payload?: Array<{ payload: { age: number }; value: number }> }) => {
         if (active && payload && payload.length) {
             return (
-                <div className="glass p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)' }}>
-                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                <div className="glass" style={{ padding: '12px', borderRadius: '8px' }}>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)', fontSize: '12px' }}>
                         อายุ {payload[0].payload.age} ปี
                     </p>
-                    <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>
-                        ฿{(payload[0].value / 1000000).toFixed(2)}M
+                    <p style={{ margin: '4px 0 0 0', fontWeight: 600, color: 'var(--text-primary)' }}>
+                        ฿{payload[0].value.toLocaleString('th-TH')}
                     </p>
                 </div>
             );
