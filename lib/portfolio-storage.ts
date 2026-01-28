@@ -7,7 +7,8 @@ const STORAGE_KEY = 'gpf_portfolio_data';
 export interface StoredPortfolioData {
     funds: Fund[];
     totalValue: number;
-    lastUpdated: string;
+    dataDate: string;        // วันที่ข้อมูล
+    lastUpdated: string;     // วันที่บันทึก
 }
 
 export function savePortfolioData(data: StoredPortfolioData): void {

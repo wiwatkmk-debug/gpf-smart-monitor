@@ -38,11 +38,12 @@ export default function AdminPage() {
         router.push('/');
     };
 
-    const handleSave = (funds: Fund[], totalValue: number) => {
+    const handleSave = (funds: Fund[], totalValue: number, dataDate: string) => {
         try {
             savePortfolioData({
                 funds,
                 totalValue,
+                dataDate,
                 lastUpdated: new Date().toISOString(),
             });
 
@@ -149,7 +150,11 @@ export default function AdminPage() {
                 {existingData && (
                     <div className="mb-6 p-4 rounded-lg" style={{ backgroundColor: 'var(--card-bg)' }}>
                         <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            📅 <strong>อัพเดทล่าสุด:</strong>{' '}
+                            📅 <strong>วันที่ข้อมูล:</strong>{' '}
+                            {existingData.dataDate ? new Date(existingData.dataDate).toLocaleDateString('th-TH') : 'ไม่ระบุ'}
+                        </p>
+                        <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                            🕒 <strong>อัพเดทล่าสุด:</strong>{' '}
                             {new Date(existingData.lastUpdated).toLocaleString('th-TH')}
                         </p>
                         <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
@@ -162,6 +167,7 @@ export default function AdminPage() {
                 {/* Portfolio Form */}
                 <PortfolioForm
                     initialData={initialFunds}
+                    initialDataDate={existingData?.dataDate}
                     onSave={handleSave}
                 />
 
@@ -171,10 +177,12 @@ export default function AdminPage() {
                         📝 วิธีใช้งาน
                     </h3>
                     <ol className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
-                        <li>1. กรอกข้อมูลจาก กบข. ของคุณในแต่ละกองทุน</li>
-                        <li>2. คลิก "แสดง Preview" เพื่อตรวจสอบข้อมูล</li>
-                        <li>3. คลิก "บันทึกข้อมูล" เพื่อบันทึก</li>
-                        <li>4. กลับไปหน้าหลักแล้วกด "รีเฟรช" เพื่อดูข้อมูลใหม่</li>
+                        <li>1. ระบุวันที่ของข้อมูล</li>
+                        <li>2. (ตัวเลือก) อัพโหลดภาพแคปหน้าจอจาก กบข.</li>
+                        <li>3. กรอกข้อมูลในแต่ละกองทุน</li>
+                        <li>4. คลิก "แสดง Preview" เพื่อตรวจสอบข้อมูล</li>
+                        <li>5. คลิก "บันทึกข้อมูล" เพื่อบันทึก</li>
+                        <li>6. กลับไปหน้าหลักแล้วกด "รีเฟรช" เพื่อดูข้อมูลใหม่</li>
                     </ol>
                 </div>
             </div>
