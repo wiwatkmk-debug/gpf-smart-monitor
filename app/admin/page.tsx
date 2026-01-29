@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoginForm from '@/components/admin/LoginForm';
 import PortfolioForm from '@/components/admin/PortfolioForm';
+import PDFUpload from '@/components/admin/PDFUpload';
 import { login, logout, isAuthenticated } from '@/lib/admin-auth';
 import { savePortfolioData, loadPortfolioData } from '@/lib/portfolio-storage';
 import type { Fund } from '@/types/portfolio';
@@ -14,6 +15,7 @@ export default function AdminPage() {
     const [loginError, setLoginError] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [saveSuccess, setSaveSuccess] = useState(false);
+    const [activeTab, setActiveTab] = useState<'current' | 'historical'>('current');
 
     useEffect(() => {
         // Check if already authenticated
@@ -164,27 +166,96 @@ export default function AdminPage() {
                     </div>
                 )}
 
-                {/* Portfolio Form */}
-                <PortfolioForm
-                    initialData={initialFunds}
-                    initialDataDate={existingData?.dataDate}
-                    onSave={handleSave}
-                />
 
-                {/* Instructions */}
-                <div className="mt-6 p-4 rounded-lg glass border" style={{ borderColor: 'var(--border-color)' }}>
-                    <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                        📝 วิธีใช้งาน
-                    </h3>
-                    <ol className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
-                        <li>1. ระบุวันที่ของข้อมูล</li>
-                        <li>2. (ตัวเลือก) อัพโหลดภาพแคปหน้าจอจาก กบข.</li>
-                        <li>3. กรอกข้อมูลในแต่ละกองทุน</li>
-                        <li>4. คลิก "แสดง Preview" เพื่อตรวจสอบข้อมูล</li>
-                        <li>5. คลิก "บันทึกข้อมูล" เพื่อบันทึก</li>
-                        <li>6. กลับไปหน้าหลักแล้วกด "รีเฟรช" เพื่อดูข้อมูลใหม่</li>
-                    </ol>
+                {/* Tabs */}
+                <div className="mb-6 flex gap-2 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                    <button
+                        onClick={() => setActiveTab('current')}
+                        className={`px-4 py-3 font-medium transition-all ${activeTab === 'current'
+                            ? 'border-b-2 border-blue-500 text-blue-500'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        📸 ข้อมูลปัจจุบัน (Screenshot)
+                    </button>
+                    <button
+                        onClick={() => setActiveTab('historical')}
+                        className={`px-4 py-3 font-medium transition-all ${activeTab === 'historical'
+                            ? 'border-b-2 border-blue-500 text-blue-500'
+                            : 'text-gray-500 hover:text-gray-700'
+                            }`}
+                    >
+                        📄 นำเข้าข้อมูลย้อนหลัง (PDF)
+                    </button>
                 </div>
+
+                {/* Current Data Tab */}
+                {activeTab === 'current' && (
+                    <>
+                        {/* Portfolio Form */}
+                        <PortfolioForm
+                            initialData={initialFunds}
+                            initialDataDate={existingData?.dataDate}
+                            onSave={handleSave}
+                        />
+
+                        {/* Instructions */}
+                        <div className="mt-6 p-4 rounded-lg glass border" style={{ borderColor: 'var(--border-color)' }}>
+                            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                                📝 วิธีใช้งาน
+                            </h3>
+                            <ol className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                                <li>1. ระบุวันที่ของข้อมูล</li>
+                                <li>2. (ตัวเลือก) อัพโหลดภาพแคปหน้าจอจาก กบข.</li>
+                                <li>3. กรอกข้อมูลในแต่ละกองทุน</li>
+                                <li>4. คลิก "แสดง Preview" เพื่อตรวจสอบข้อมูล</li>
+                                <li>5. คลิก "บันทึกข้อมูล" เพื่อบันทึก</li>
+                                <li>6. กลับไปหน้าหลักแล้วกด "รีเฟรช" เพื่อดูข้อมูลใหม่</li>
+                            </ol>
+                        </div>
+                    </>
+                )}
+
+                {/* Historical Data Tab */}
+                {activeTab === 'historical' && (
+                    <>
+                        <div className="mb-6 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                            <h3 className="font-bold text-blue-900 dark:text-blue-100 mb-2">
+                                💡 นำเข้าข้อมูลย้อนหลังจาก PDF
+                            </h3>
+                            <p className="text-sm text-blue-800 dark:text-blue-200">
+                                อัพโหลดไฟล์ TransactionUnitDetail_*.pdf จาก กบข. เพื่อนำเข้าข้อมูลย้อนหลัง
+                                ระบบจะดึงข้อมูลทั้ง 4 กองทุนอัตโนมัติ
+                            </p>
+                        </div>
+
+                        <PDFUpload
+                            onDataExtracted={(data) => {
+                                console.log('PDF data extracted:', data);
+                            }}
+                            onDataSaved={(year) => {
+                                console.log('Data saved for year:', year);
+                                setSaveSuccess(true);
+                                setTimeout(() => setSaveSuccess(false), 3000);
+                            }}
+                        />
+
+                        {/* Instructions for PDF */}
+                        <div className="mt-6 p-4 rounded-lg glass border" style={{ borderColor: 'var(--border-color)' }}>
+                            <h3 className="font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                                📝 วิธีใช้งาน PDF Import
+                            </h3>
+                            <ol className="text-sm space-y-1" style={{ color: 'var(--text-secondary)' }}>
+                                <li>1. เตรียม TransactionUnitDetail ไฟล์ PDF จาก กบข.</li>
+                                <li>2. วางไฟล์ในพื้นที่อัพโหลด หรือคลิกเพื่อเลือกไฟล์</li>
+                                <li>3. รอระบบประมวลผลและดึงข้อมูล (ใช้เวลาประมาณ 10-20 วินาที)</li>
+                                <li>4. ตรวจสอบข้อมูลที่ดึงได้</li>
+                                <li>5. บันทึกข้อมูลเข้าระบบ</li>
+                            </ol>
+                        </div>
+                    </>
+                )}
+
             </div>
         </div>
     );

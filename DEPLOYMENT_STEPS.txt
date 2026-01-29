@@ -1,0 +1,22 @@
+🚀 Quick Deploy Steps:
+
+1. COMMIT CODE:
+   git add .
+   git commit -m "feat: Monthly portfolio tracking ready for deployment"
+   git push origin main
+
+2. GO TO VERCEL:
+   https://vercel.com
+   → Sign up with GitHub
+   → Import Project "portwatch-pro"
+
+3. SET ENVIRONMENT VARIABLES (IMPORTANT!):
+   Name: NEXT_PUBLIC_GEMINI_API_KEY
+   Value: (copy from your .env.local file)
+
+4. DEPLOY:
+   Click "Deploy" button
+   Wait 2-3 minutes
+   Done! You'll get a URL like: https://portwatch-pro.vercel.app
+
+Need help? Check deployment-guide.md in artifacts folder!

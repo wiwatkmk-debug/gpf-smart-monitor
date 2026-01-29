@@ -14,10 +14,28 @@ interface PortfolioFormProps {
 }
 
 export default function PortfolioForm({ initialData, initialDataDate, onSave, onCancel }: PortfolioFormProps) {
-    const [dataDate, setDataDate] = useState<string>(initialDataDate || new Date().toISOString().split('T')[0]);
+    // Validate and sanitize initial date
+    const getValidDate = (dateString?: string): string => {
+        if (!dateString) return new Date().toISOString().split('T')[0];
+
+        const date = new Date(dateString);
+        const year = date.getFullYear();
+
+        // Check if date is valid and year is reasonable (between 2000-2100)
+        if (isNaN(date.getTime()) || year < 2000 || year > 2100) {
+            return new Date().toISOString().split('T')[0];
+        }
+
+        return dateString;
+    };
+
+    const [dataDate, setDataDate] = useState<string>(getValidDate(initialDataDate));
     const [uploadedImage, setUploadedImage] = useState<string>('');
     const [isExtracting, setIsExtracting] = useState(false);
     const [extractError, setExtractError] = useState<string>('');
+    const [extractedData, setExtractedData] = useState<any>(null);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [showSuccessNotification, setShowSuccessNotification] = useState(false);
     const [funds, setFunds] = useState<Fund[]>(initialData || [
         {
             id: 'gpf-fix-income',
@@ -115,40 +133,11 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
         setExtractError('');
 
         try {
-            const extractedData = await extractDataFromImage(uploadedImage);
+            const data = await extractDataFromImage(uploadedImage);
 
-            // Map extracted data to funds
-            const fundMapping: { [key: string]: string } = {
-                'แผนตราสารหนี้': 'gpf-fix-income',
-                'แผนหุ้นไทย': 'gpf-eq-th',
-                'แผนหุ้นต่างประเทศ': 'gpf-eq-global',
-                'แผนทองคำ': 'gpf-gold',
-            };
-
-            const updatedFunds = funds.map(fund => {
-                const extractedFund = extractedData.funds.find(
-                    ef => fundMapping[ef.name] === fund.id
-                );
-
-                if (extractedFund) {
-                    return {
-                        ...fund,
-                        value: extractedFund.value,
-                        units: extractedFund.units,
-                        navPerUnit: extractedFund.navPerUnit,
-                    };
-                }
-
-                return fund;
-            });
-
-            setFunds(updatedFunds);
-
-            // Update date if found
-            if (extractedData.dataDate) {
-                setDataDate(extractedData.dataDate);
-            }
-
+            // Store extracted data and show confirmation dialog
+            setExtractedData(data);
+            setShowConfirmDialog(true);
             setIsExtracting(false);
         } catch (error) {
             console.error('Error extracting data:', error);
@@ -157,15 +146,115 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
         }
     };
 
-    const handleSave = () => {
-        const { funds: updatedFunds, totalValue } = calculateTotals();
-        onSave(updatedFunds, totalValue, dataDate);
+    const handleConfirmExtraction = () => {
+        console.log('🔵 handleConfirmExtraction called');
+        console.log('📦 extractedData:', extractedData);
+
+        if (!extractedData) {
+            console.log('❌ No extracted data');
+            return;
+        }
+
+        // Map extracted data to funds
+        const fundMapping: { [key: string]: string } = {
+            'แผนตราสารหนี้': 'gpf-fix-income',
+            'แผนหุ้นไทย': 'gpf-eq-th',
+            'แผนหุ้นต่างประเทศ': 'gpf-eq-global',
+            'แผนทองคำ': 'gpf-gold',
+        };
+
+        console.log('🗺️ fundMapping:', fundMapping);
+        console.log('📊 Current funds before update:', funds);
+
+        const updatedFunds = funds.map(fund => {
+            const extractedFund = extractedData.funds.find(
+                (ef: any) => fundMapping[ef.name] === fund.id
+            );
+
+            console.log(`Checking fund ${fund.id}:`, extractedFund);
+
+            if (extractedFund) {
+                const updated = {
+                    ...fund,
+                    value: extractedFund.value,
+                    units: extractedFund.units,
+                    navPerUnit: extractedFund.navPerUnit,
+                };
+                console.log(`✅ Updated fund ${fund.id}:`, updated);
+                return updated;
+            }
+
+            console.log(`⏭️ No update for fund ${fund.id}`);
+            return fund;
+        });
+
+        console.log('📊 Updated funds:', updatedFunds);
+        setFunds(updatedFunds);
+
+        // Update date if found
+        if (extractedData.dataDate) {
+            console.log('📅 Setting date to:', extractedData.dataDate);
+            setDataDate(extractedData.dataDate);
+        }
+
+        setShowConfirmDialog(false);
+        setExtractedData(null);
+        console.log('✅ handleConfirmExtraction completed');
     };
+
+    const handleCancelExtraction = () => {
+        setShowConfirmDialog(false);
+        setExtractedData(null);
+    };
+
+    const handleSave = () => {
+        console.log('💾 handleSave called');
+        console.log('📊 Current funds:', funds);
+        console.log('📅 Current dataDate:', dataDate);
+
+        const { funds: updatedFunds, totalValue } = calculateTotals();
+        console.log('💰 Total value:', totalValue);
+        console.log('📊 Updated funds with allocations:', updatedFunds);
+
+        onSave(updatedFunds, totalValue, dataDate);
+        console.log('✅ onSave called');
+
+        // Show success notification
+        setShowSuccessNotification(true);
+
+        // Redirect to homepage after 2 seconds
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 2000);
+    };
+
+
 
     const { totalValue } = calculateTotals();
 
     return (
         <div className="space-y-6">
+            {/* Success Notification */}
+            {showSuccessNotification && (
+                <div className="fixed top-4 right-4 z-50 animate-slide-in">
+                    <div className="glass rounded-lg p-4 border-2 flex items-center gap-3" style={{ borderColor: 'var(--success)', backgroundColor: 'var(--bg-card)' }}>
+                        <div className="flex items-center gap-2 flex-1">
+                            <span className="text-2xl">✅</span>
+                            <div>
+                                <p className="font-bold" style={{ color: 'var(--success)' }}>บันทึกสำเร็จ!</p>
+                                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>ข้อมูลถูกบันทึกเรียบร้อยแล้ว</p>
+                            </div>
+                        </div>
+                        <a
+                            href="/"
+                            className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
+                        >
+                            🏠 กลับหน้าแรก
+                        </a>
+                    </div>
+                </div>
+            )}
+
             {/* Date Field */}
             <Card>
                 <div className="mb-4">
@@ -221,6 +310,86 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
                         </p>
                     )}
                 </Card>
+            )}
+
+            {/* Confirmation Dialog */}
+            {showConfirmDialog && extractedData && (
+                <div className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                    <div
+                        className="glass rounded-lg flex flex-col"
+                        style={{
+                            backgroundColor: 'var(--bg-card)',
+                            width: '90%',
+                            maxWidth: '500px',
+                            height: '300px',
+                            position: 'fixed',
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -50%)'
+                        }}
+                    >
+                        {/* Header */}
+                        <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
+                            <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
+                                ✅ อ่านข้อมูลสำเร็จ!
+                            </h3>
+                            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                                กรุณาตรวจสอบข้อมูลที่ AI อ่านได้ก่อนยืนยัน
+                            </p>
+                        </div>
+
+                        {/* Scrollable Content */}
+                        <div className="flex-1 overflow-y-auto p-4">
+                            {extractedData.dataDate && (
+                                <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)' }}>
+                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>วันที่ข้อมูล:</p>
+                                    <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{extractedData.dataDate}</p>
+                                </div>
+                            )}
+
+                            <div className="space-y-2">
+                                {extractedData.funds.map((fund: any, idx: number) => (
+                                    <div key={idx} className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
+                                        <h4 className="font-bold mb-2 text-sm" style={{ color: 'var(--text-primary)' }}>{fund.name}</h4>
+                                        <div className="grid grid-cols-3 gap-2 text-xs">
+                                            <div>
+                                                <p style={{ color: 'var(--text-secondary)' }}>มูลค่า:</p>
+                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>฿{fund.value.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</p>
+                                            </div>
+                                            <div>
+                                                <p style={{ color: 'var(--text-secondary)' }}>จำนวนหน่วย:</p>
+                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{fund.units.toLocaleString('th-TH', { minimumFractionDigits: 4 })}</p>
+                                            </div>
+                                            <div>
+                                                <p style={{ color: 'var(--text-secondary)' }}>NAV:</p>
+                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>฿{fund.navPerUnit.toLocaleString('th-TH', { minimumFractionDigits: 4 })}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Sticky Footer with Buttons */}
+                        <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
+                            <div className="flex gap-3">
+                                <button
+                                    onClick={handleCancelExtraction}
+                                    className="flex-1 px-4 py-2 glass rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                    style={{ color: 'var(--text-secondary)' }}
+                                >
+                                    ❌ ยกเลิก
+                                </button>
+                                <button
+                                    onClick={handleConfirmExtraction}
+                                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
+                                >
+                                    ✅ ยืนยันและกรอกข้อมูล
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             )}
 
             {/* Portfolio Form */}
@@ -339,8 +508,7 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
 
                     <button
                         onClick={handleSave}
-                        disabled={totalValue === 0}
-                        className="flex-1 px-4 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity"
+                        className="flex-1 px-4 py-3 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
                     >
                         💾 บันทึกข้อมูล
                     </button>

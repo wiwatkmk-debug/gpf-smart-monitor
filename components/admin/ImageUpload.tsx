@@ -11,6 +11,7 @@ interface ImageUploadProps {
 export default function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
     const [isDragging, setIsDragging] = useState(false);
     const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
+    const [fileName, setFileName] = useState<string>('');
 
     const handleDragOver = (e: React.DragEvent) => {
         e.preventDefault();
@@ -43,6 +44,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
         reader.onloadend = () => {
             const result = reader.result as string;
             setPreviewUrl(result);
+            setFileName(file.name);
             onImageUpload(result);
         };
         reader.readAsDataURL(file);
@@ -50,6 +52,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
 
     const handleRemove = () => {
         setPreviewUrl(null);
+        setFileName('');
         onImageUpload('');
     };
 
@@ -116,18 +119,19 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                 </div>
             ) : (
                 <div className="space-y-4">
-                    <div className="relative rounded-lg overflow-hidden border" style={{ borderColor: 'var(--border-color)' }}>
-                        <img
-                            src={previewUrl}
-                            alt="Preview"
-                            className="w-full h-auto max-h-96 object-contain"
-                            style={{ backgroundColor: 'var(--bg-secondary)' }}
-                        />
+                    <div className="p-4 rounded-lg border-2" style={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--success)' }}>
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex-1">
+                                <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>ไฟล์ที่อัพโหลด:</p>
+                                <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{fileName}</p>
+                            </div>
+                            <span className="text-xs px-3 py-1.5 rounded font-medium" style={{ backgroundColor: 'var(--success)', color: 'white' }}>✓ สำเร็จ</span>
+                        </div>
                     </div>
                     <div className="flex gap-3">
                         <label className="flex-1 cursor-pointer">
                             <span className="w-full px-4 py-2 glass rounded-lg inline-block text-center hover:opacity-90 transition-opacity">
-                                เปลี่ยนภาพ
+                                🔄 เปลี่ยนภาพ
                             </span>
                             <input
                                 type="file"
@@ -140,7 +144,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                             onClick={handleRemove}
                             className="px-4 py-2 glass rounded-lg hover:opacity-90 transition-opacity text-red-500"
                         >
-                            ลบภาพ
+                            🗑️ ลบภาพ
                         </button>
                     </div>
                 </div>
