@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Card from '../ui/Card';
 import ImageUpload from './ImageUpload';
-import { extractDataFromImage } from '@/lib/image-processor';
+// import { extractDataFromImage } from '@/lib/image-processor'; // Deprecated: Moved to Server Action
 import type { Fund } from '@/types/portfolio';
 
 interface PortfolioFormProps {
@@ -133,7 +133,9 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
         setExtractError('');
 
         try {
-            const data = await extractDataFromImage(uploadedImage);
+            // Call Server Action instead of client-side function
+            const { extractPortfolioFromImage } = await import('@/app/actions/extract-portfolio');
+            const data = await extractPortfolioFromImage(uploadedImage);
 
             // Store extracted data and show confirmation dialog
             setExtractedData(data);
@@ -312,81 +314,78 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
                 </Card>
             )}
 
-            {/* Confirmation Dialog */}
+            {/* Premium Confirmation Dialog */}
             {showConfirmDialog && extractedData && (
-                <div className="fixed inset-0 z-50" style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}>
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
                     <div
-                        className="glass rounded-lg flex flex-col"
-                        style={{
-                            backgroundColor: 'var(--bg-card)',
-                            width: '90%',
-                            maxWidth: '500px',
-                            height: '300px',
-                            position: 'fixed',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -50%)'
-                        }}
+                        className="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden scale-100 animate-slide-up"
+                        style={{ maxHeight: '90vh' }}
                     >
-                        {/* Header */}
-                        <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
-                            <h3 className="text-lg font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                                ✅ อ่านข้อมูลสำเร็จ!
-                            </h3>
-                            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                                กรุณาตรวจสอบข้อมูลที่ AI อ่านได้ก่อนยืนยัน
-                            </p>
+                        {/* Premium Header */}
+                        <div className="bg-gradient-to-r from-indigo-900 to-slate-800 p-6 text-white text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-full bg-white/5 opacity-50"></div>
+                            <div className="relative z-10">
+                                <h3 className="text-xl font-bold mb-1">
+                                    พอร์ตการลงทุนของคุณ
+                                </h3>
+                                <p className="text-indigo-200 text-sm">
+                                    {extractedData.dataDate ? `ข้อมูล ณ วันที่ ${new Date(extractedData.dataDate).toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' })}` : 'ไม่พบวันที่ระบุ'}
+                                </p>
+                                <div className="mt-4 text-3xl font-bold text-emerald-400">
+                                    ฿{extractedData.funds.reduce((acc: number, f: any) => acc + f.value, 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </div>
+                                <p className="text-xs text-indigo-300">มูลค่ารวมทั้งหมด</p>
+                            </div>
                         </div>
 
                         {/* Scrollable Content */}
-                        <div className="flex-1 overflow-y-auto p-4">
-                            {extractedData.dataDate && (
-                                <div className="mb-3 p-2 rounded-lg" style={{ backgroundColor: 'var(--bg-secondary)' }}>
-                                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>วันที่ข้อมูล:</p>
-                                    <p className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{extractedData.dataDate}</p>
-                                </div>
-                            )}
+                        <div className="overflow-y-auto p-4 space-y-3" style={{ maxHeight: 'calc(90vh - 200px)' }}>
+                            {extractedData.funds.map((fund: any, idx: number) => {
+                                // Determine icon and color based on fund name
+                                let icon = '📌';
+                                let colorClass = 'bg-slate-100 text-slate-600';
+                                if (fund.name.includes('ตราสารหนี้')) { icon = '💵'; colorClass = 'bg-blue-50 text-blue-600'; }
+                                if (fund.name.includes('หุ้นไทย')) { icon = '📈'; colorClass = 'bg-red-50 text-red-600'; }
+                                if (fund.name.includes('หุ้นต่างประเทศ')) { icon = '🌐'; colorClass = 'bg-indigo-50 text-indigo-600'; }
+                                if (fund.name.includes('ทองคำ')) { icon = '👑'; colorClass = 'bg-amber-50 text-amber-600'; }
 
-                            <div className="space-y-2">
-                                {extractedData.funds.map((fund: any, idx: number) => (
-                                    <div key={idx} className="p-3 rounded-lg border" style={{ borderColor: 'var(--border-color)', backgroundColor: 'var(--bg-secondary)' }}>
-                                        <h4 className="font-bold mb-2 text-sm" style={{ color: 'var(--text-primary)' }}>{fund.name}</h4>
-                                        <div className="grid grid-cols-3 gap-2 text-xs">
-                                            <div>
-                                                <p style={{ color: 'var(--text-secondary)' }}>มูลค่า:</p>
-                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>฿{fund.value.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ color: 'var(--text-secondary)' }}>จำนวนหน่วย:</p>
-                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{fund.units.toLocaleString('th-TH', { minimumFractionDigits: 4 })}</p>
-                                            </div>
-                                            <div>
-                                                <p style={{ color: 'var(--text-secondary)' }}>NAV:</p>
-                                                <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>฿{fund.navPerUnit.toLocaleString('th-TH', { minimumFractionDigits: 4 })}</p>
+                                return (
+                                    <div key={idx} className="flex items-center gap-4 p-4 rounded-xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow bg-white">
+                                        <div className={`w-12 h-12 rounded-full flex items-center justify-center text-xl ${colorClass}`}>
+                                            {icon}
+                                        </div>
+                                        <div className="flex-1">
+                                            <h4 className="font-bold text-slate-800 text-sm">{fund.name}</h4>
+                                            <div className="flex justify-between items-end mt-1">
+                                                <div>
+                                                    <p className="text-xs text-slate-500">มูลค่า</p>
+                                                    <p className="font-bold text-slate-900">฿{fund.value.toLocaleString('th-TH', { minimumFractionDigits: 2 })}</p>
+                                                </div>
+                                                <div className="text-right">
+                                                    <p className="text-xs text-slate-500">หน่วย</p>
+                                                    <p className="font-medium text-slate-700 text-sm">{fund.units.toLocaleString('th-TH', { minimumFractionDigits: 4 })}</p>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
-                                ))}
-                            </div>
+                                );
+                            })}
                         </div>
 
-                        {/* Sticky Footer with Buttons */}
-                        <div className="p-4 border-t" style={{ borderColor: 'var(--border-color)' }}>
-                            <div className="flex gap-3">
-                                <button
-                                    onClick={handleCancelExtraction}
-                                    className="flex-1 px-4 py-2 glass rounded-lg font-medium hover:opacity-90 transition-opacity"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                >
-                                    ❌ ยกเลิก
-                                </button>
-                                <button
-                                    onClick={handleConfirmExtraction}
-                                    className="flex-1 px-4 py-2 bg-primary text-white rounded-lg font-medium hover:opacity-90 transition-opacity"
-                                >
-                                    ✅ ยืนยันและกรอกข้อมูล
-                                </button>
-                            </div>
+                        {/* Footer Actions */}
+                        <div className="p-4 bg-slate-50 border-t border-slate-100 flex gap-3">
+                            <button
+                                onClick={handleCancelExtraction}
+                                className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-500 bg-white border border-slate-200 hover:bg-slate-50 transition-all"
+                            >
+                                ยกเลิก
+                            </button>
+                            <button
+                                onClick={handleConfirmExtraction}
+                                className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-indigo-600 shadow-lg shadow-indigo-200 hover:bg-indigo-700 hover:shadow-xl hover:-translate-y-0.5 transition-all"
+                            >
+                                ยืนยันข้อมูล
+                            </button>
                         </div>
                     </div>
                 </div>

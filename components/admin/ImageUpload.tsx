@@ -104,12 +104,13 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                     </p>
                     <label className="cursor-pointer">
                         <span className="px-3 py-1.5 text-sm bg-primary text-white rounded-lg inline-block hover:opacity-90 transition-opacity">
-                            เลือกไฟล์
+                            📸 ถ่ายรูป / เลือกไฟล์
                         </span>
                         <input
                             type="file"
                             className="hidden"
                             accept="image/*"
+                            capture="environment"
                             onChange={handleFileInput}
                         />
                     </label>
@@ -131,12 +132,13 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
                     <div className="flex gap-3">
                         <label className="flex-1 cursor-pointer">
                             <span className="w-full px-4 py-2 glass rounded-lg inline-block text-center hover:opacity-90 transition-opacity">
-                                🔄 เปลี่ยนภาพ
+                                📸 ถ่ายรูป / เลือกภาพ
                             </span>
                             <input
                                 type="file"
                                 className="hidden"
                                 accept="image/*"
+                                capture="environment" // Opens rear camera on mobile
                                 onChange={handleFileInput}
                             />
                         </label>

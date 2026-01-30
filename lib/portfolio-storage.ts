@@ -45,3 +45,31 @@ export function clearPortfolioData(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEY);
 }
+
+const HISTORY_KEY = 'gpf_rebalancing_history';
+import { RebalancingTransaction } from '@/types/rebalancing';
+
+export function saveRebalancingHistory(transaction: RebalancingTransaction): void {
+    if (typeof window === 'undefined') return;
+
+    try {
+        const history = loadRebalancingHistory();
+        history.unshift(transaction); // Add new at the beginning
+        localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+    } catch (error) {
+        console.error('Error saving rebalancing history:', error);
+    }
+}
+
+export function loadRebalancingHistory(): RebalancingTransaction[] {
+    if (typeof window === 'undefined') return [];
+
+    try {
+        const data = localStorage.getItem(HISTORY_KEY);
+        if (!data) return [];
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error loading rebalancing history:', error);
+        return [];
+    }
+}

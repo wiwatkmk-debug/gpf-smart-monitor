@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id // This will be the Clerk User ID
+  email     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  portfolio Portfolio?
+}
+
+model Portfolio {
+  id           String   @id @default(cuid())
+  userId       String   @unique
+  user         User     @relation(fields: [userId], references: [id])
+  
+  totalBalance Float    @default(0)
+  holdings     Json     @default("[]") // Storing as JSON for easy migration
+  history      Json     @default("[]") // Storing chart history as JSON
+  
+  lastUpdated  DateTime @default(now())
+}

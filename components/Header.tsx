@@ -2,6 +2,7 @@
 
 import { Bell, Moon, Sun } from 'lucide-react';
 import { useState } from 'react';
+import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 
 export default function Header() {
     const [darkMode, setDarkMode] = useState(false);
@@ -50,6 +51,20 @@ export default function Header() {
                             </span>
                         )}
                     </button>
+
+                    {/* Clerk Authentication */}
+                    <div className="flex items-center ml-2">
+                        <SignedIn>
+                            <UserButton afterSignOutUrl="/" />
+                        </SignedIn>
+                        <SignedOut>
+                            <SignInButton mode="modal">
+                                <button className="px-4 py-2 bg-primary text-white rounded-lg hover:opacity-90 transition-opacity text-sm font-medium">
+                                    เข้าสู่ระบบ
+                                </button>
+                            </SignInButton>
+                        </SignedOut>
+                    </div>
                 </div>
             </div>
         </header>
