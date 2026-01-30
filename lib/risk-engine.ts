@@ -1,5 +1,6 @@
 
-import { InvestmentPlan, INVESTMENT_PLANS } from './mock-gpf-data';
+import { INVESTMENT_PLANS } from './mock-gpf-data';
+import { InvestmentPlan } from '@/types/gpf';
 
 export interface Question {
     id: number;
