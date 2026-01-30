@@ -17,7 +17,8 @@ import {
     Clock
 } from 'lucide-react';
 import Link from 'next/link';
-import { INVESTMENT_PLANS, InvestmentPlan } from '@/lib/mock-gpf-data';
+import { INVESTMENT_PLANS } from '@/lib/mock-gpf-data';
+import { InvestmentPlan } from '@/types/gpf';
 import { generateRebalancingRecommendations, calculateRebalancingImpact } from '@/lib/rebalancingEngine';
 import type { Fund, RebalancingRecommendation } from '@/types/portfolio';
 import { saveRebalancingHistory, loadRebalancingHistory } from '@/lib/portfolio-storage';
@@ -150,7 +151,7 @@ export default function RebalancingPage() {
                 fundName: rec.fundName,
                 action: rec.action,
                 amount: Math.abs(rec.amount)
-            })).filter(item => item.action !== 'hold')
+            })).filter((item): item is { fundName: string; action: 'buy' | 'sell'; amount: number } => item.action !== 'hold')
         };
 
         // Simulate API call
