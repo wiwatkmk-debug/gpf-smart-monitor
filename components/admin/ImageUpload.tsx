@@ -4,13 +4,13 @@ import { useState } from 'react';
 import Card from '../ui/Card';
 
 interface ImageUploadProps {
-    onImageUpload: (imageUrl: string) => void;
-    currentImage?: string;
+    onImageUpload: (file: File | null) => void;
+    currentImage?: File | null;
 }
 
 export default function ImageUpload({ onImageUpload, currentImage }: ImageUploadProps) {
     const [isDragging, setIsDragging] = useState(false);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(currentImage || null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [fileName, setFileName] = useState<string>('');
 
     const handleDragOver = (e: React.DragEvent) => {
@@ -45,7 +45,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
             const result = reader.result as string;
             setPreviewUrl(result);
             setFileName(file.name);
-            onImageUpload(result);
+            onImageUpload(file); // Pass the File object
         };
         reader.readAsDataURL(file);
     };
@@ -53,7 +53,7 @@ export default function ImageUpload({ onImageUpload, currentImage }: ImageUpload
     const handleRemove = () => {
         setPreviewUrl(null);
         setFileName('');
-        onImageUpload('');
+        onImageUpload(null);
     };
 
     return (

@@ -1,119 +1,81 @@
 'use client';
 
-import { useState } from 'react';
 import { Fund } from '@/types/portfolio';
-import Card from './ui/Card';
-import Badge from './ui/Badge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { Wallet, TrendingUp, Globe, Coins, ChevronRight, PieChart } from 'lucide-react';
 
 interface FundListProps {
     funds: Fund[];
 }
 
-const RISK_LABELS = {
-    1: 'ต่ำมาก',
-    2: 'ต่ำ',
-    3: 'ปานกลาง',
-    4: 'สูง',
-    5: 'สูงมาก',
+const getFundIcon = (type: string, name: string) => {
+    if (name.includes('ทองคำ') || type === 'alternative') return <Coins className="w-5 h-5 text-yellow-600" />;
+    if (name.includes('ต่างประเทศ') || type === 'foreign') return <Globe className="w-5 h-5 text-blue-600" />;
+    if (name.includes('หุ้น') || type === 'equity') return <TrendingUp className="w-5 h-5 text-red-600" />;
+    return <Wallet className="w-5 h-5 text-emerald-600" />;
 };
 
-const TYPE_LABELS = {
-    equity: 'หุ้น',
-    'fixed-income': 'ตราสารหนี้',
-    property: 'อสังหาริมทรัพย์',
-    alternative: 'ทางเลือก',
+const getFundColorBg = (type: string, name: string) => {
+    if (name.includes('ทองคำ')) return 'bg-yellow-100';
+    if (name.includes('ต่างประเทศ')) return 'bg-blue-100';
+    if (name.includes('หุ้น')) return 'bg-red-100';
+    return 'bg-emerald-100';
 };
 
 export default function FundList({ funds }: FundListProps) {
-    const [expandedFund, setExpandedFund] = useState<string | null>(null);
-
-    const toggleFund = (fundId: string) => {
-        setExpandedFund(expandedFund === fundId ? null : fundId);
-    };
-
     return (
-        <Card>
-            <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
-                รายละเอียดกองทุน
-            </h3>
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+            <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                    <PieChart className="w-5 h-5 text-gray-500" />
+                    สินทรัพย์ในพอร์ต
+                </h3>
+                <span className="text-xs font-medium text-gray-500 bg-white px-2 py-1 rounded-lg border border-gray-200">
+                    {funds.length} กองทุน
+                </span>
+            </div>
 
-            <div className="space-y-3">
+            <div className="divide-y divide-gray-100">
                 {funds.map((fund) => (
                     <div
                         key={fund.id}
-                        className="border rounded-lg p-4 transition-all hover:shadow-md cursor-pointer"
-                        style={{ borderColor: 'var(--border-color)' }}
-                        onClick={() => toggleFund(fund.id)}
+                        className="group p-4 hover:bg-gray-50 transition-colors cursor-pointer flex items-center gap-4"
                     >
-                        <div className="flex items-center justify-between mb-2">
-                            <div className="flex-1">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <h4 className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                                        {fund.name}
-                                    </h4>
-                                    <Badge variant="default" className="text-xs">
-                                        {fund.code}
-                                    </Badge>
-                                </div>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    {TYPE_LABELS[fund.type]} · ความเสี่ยง: {RISK_LABELS[fund.riskLevel]}
-                                </p>
-                            </div>
-                            <div className="text-right">
-                                <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>
-                                    ฿{fund.value.toLocaleString('th-TH', { maximumFractionDigits: 0 })}
-                                </p>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                    {fund.allocation.toFixed(1)}%
-                                </p>
-                            </div>
-                            {expandedFund === fund.id ? (
-                                <ChevronUp className="w-5 h-5 ml-2" style={{ color: 'var(--text-secondary)' }} />
-                            ) : (
-                                <ChevronDown className="w-5 h-5 ml-2" style={{ color: 'var(--text-secondary)' }} />
-                            )}
+                        {/* Icon */}
+                        <div className={`w-12 h-12 rounded-2xl flex items-center justify-center shrink-0 ${getFundColorBg(fund.type, fund.name)} group-hover:scale-110 transition-transform`}>
+                            {getFundIcon(fund.type, fund.name)}
                         </div>
 
-                        {expandedFund === fund.id && (
-                            <div className="mt-4 pt-4 border-t grid grid-cols-2 md:grid-cols-4 gap-4" style={{ borderColor: 'var(--border-color)' }}>
-                                <div>
-                                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-                                        1 เดือน
-                                    </p>
-                                    <p className={`font-semibold ${fund.return1M >= 0 ? 'text-success' : 'text-danger'}`}>
-                                        {fund.return1M > 0 && '+'}{fund.return1M.toFixed(2)}%
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-                                        3 เดือน
-                                    </p>
-                                    <p className={`font-semibold ${fund.return3M >= 0 ? 'text-success' : 'text-danger'}`}>
-                                        {fund.return3M > 0 && '+'}{fund.return3M.toFixed(2)}%
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-                                        6 เดือน
-                                    </p>
-                                    <p className={`font-semibold ${fund.return6M >= 0 ? 'text-success' : 'text-danger'}`}>
-                                        {fund.return6M > 0 && '+'}{fund.return6M.toFixed(2)}%
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-xs mb-1" style={{ color: 'var(--text-secondary)' }}>
-                                        1 ปี
-                                    </p>
-                                    <p className={`font-semibold ${fund.return1Y >= 0 ? 'text-success' : 'text-danger'}`}>
-                                        {fund.return1Y > 0 && '+'}{fund.return1Y.toFixed(2)}%
-                                    </p>
-                                </div>
+                        {/* Middle: Name/Code */}
+                        <div className="flex-1 min-w-0">
+                            <h4 className="font-bold text-gray-900 truncate text-base mb-0.5">{fund.name}</h4>
+                            <div className="flex items-center gap-2 text-xs">
+                                <span className="px-1.5 py-0.5 rounded bg-gray-100 text-gray-600 font-medium">
+                                    {fund.code}
+                                </span>
+                                {fund.returnYTD !== undefined && (
+                                    <span className={`${fund.returnYTD >= 0 ? 'text-emerald-600' : 'text-red-600'} font-medium`}>
+                                        {fund.returnYTD >= 0 ? '+' : ''}{fund.returnYTD.toFixed(2)}% (YTD)
+                                    </span>
+                                )}
                             </div>
-                        )}
+                        </div>
+
+                        {/* Right: Values */}
+                        <div className="text-right shrink-0">
+                            <p className="font-bold text-base text-gray-900">
+                                {fund.value.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                            <div className="text-xs text-gray-500 flex flex-col items-end">
+                                <span>{fund.units.toLocaleString('th-TH', { maximumFractionDigits: 0 })} หน่วย</span>
+                                <span className="text-[10px] opacity-70">NAV {fund.navPerUnit.toFixed(4)}</span>
+                            </div>
+                        </div>
+
+                        {/* Arrow */}
+                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-500 group-hover:translate-x-1 transition-all" />
                     </div>
                 ))}
             </div>
-        </Card>
+        </div>
     );
 }

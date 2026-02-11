@@ -24,8 +24,8 @@ export async function extractPortfolioFromImage(imageDataUrl: string): Promise<E
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // Use Gemini 2.5 Flash for speed and vision capabilities
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+    // Use Gemini 1.5 Flash for speed and vision capabilities
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
     // Extract base64 data
     const base64Data = imageDataUrl.replace(/^data:image\/[a-z]+;base64,/, '');

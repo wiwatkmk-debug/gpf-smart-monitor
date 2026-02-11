@@ -1,22 +1,25 @@
 'use client';
 
-
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ArrowRight, CheckCircle, AlertTriangle, Shield, TrendingUp, RefreshCcw, Sparkles } from 'lucide-react';
 import { RISK_QUIZ, calculateRiskProfile, RiskResult, getRecommendedPlans } from '@/lib/risk-engine';
-import { INVESTMENT_PLANS } from '@/lib/mock-gpf-data';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import { generateInvestmentAdvice } from '@/app/actions/advisor';
+import { generateInvestmentAdvice, analyzePortfolioHealth, HealthCheckResult } from '@/app/actions/advisor';
+import { getSocialBenchmark, BenchmarkResult } from '@/app/actions/benchmarking';
 import { getPortfolio } from '@/app/actions/portfolio';
 import { GPFAccount } from '@/types/gpf';
+import HealthScoreCard from '@/components/advisor/HealthScoreCard';
+import SocialRankCard from '@/components/advisor/SocialRankCard';
 
 export default function AdvisorPage() {
     const [currentStep, setCurrentStep] = useState(0);
     const [answers, setAnswers] = useState<Record<number, number>>({});
     const [result, setResult] = useState<RiskResult | null>(null);
     const [aiAdvice, setAiAdvice] = useState<string | null>(null);
+    const [healthResult, setHealthResult] = useState<HealthCheckResult | null>(null);
+    const [benchmark, setBenchmark] = useState<BenchmarkResult | null>(null);
     const [isLoadingAi, setIsLoadingAi] = useState(false);
     const [portfolio, setPortfolio] = useState<GPFAccount | null>(null);
 
@@ -36,7 +39,9 @@ export default function AdvisorPage() {
             // Finished
             const profile = calculateRiskProfile(newAnswers);
             setResult(profile);
-            setAiAdvice(null); // Reset AI advice on new quiz
+            setAiAdvice(null);
+            setHealthResult(null);
+            setBenchmark(null);
         }
     };
 
@@ -45,6 +50,8 @@ export default function AdvisorPage() {
         setCurrentStep(0);
         setResult(null);
         setAiAdvice(null);
+        setHealthResult(null);
+        setBenchmark(null);
     };
 
     const handleAskAI = async () => {
@@ -61,14 +68,23 @@ export default function AdvisorPage() {
                 if (q && opt) questionsText[q.text] = opt.label;
             });
 
-            const advice = await generateInvestmentAdvice({
+            const requestData = {
                 riskProfile: result,
                 currentPortfolio: portfolio,
                 recommendedPlans: recommendedPlans,
                 userQuestionsAndAnswers: questionsText
-            });
+            };
+
+            // Run in parallel for speed
+            const [advice, health, bench] = await Promise.all([
+                generateInvestmentAdvice(requestData),
+                analyzePortfolioHealth(requestData),
+                getSocialBenchmark()
+            ]);
 
             setAiAdvice(advice);
+            setHealthResult(health);
+            setBenchmark(bench);
         } catch (e) {
             console.error(e);
             alert('AI Service temporarily unavailable');
@@ -85,7 +101,7 @@ export default function AdvisorPage() {
         const recommendedPlans = getRecommendedPlans(result.recommendedPlanIds);
 
         return (
-            <div className="p-6 max-w-2xl mx-auto space-y-6">
+            <div className="py-6 max-w-2xl mx-auto flex flex-col gap-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
                 <motion.div
                     initial={{ opacity: 0, scale: 0.9 }}
                     animate={{ opacity: 1, scale: 1 }}
@@ -102,6 +118,28 @@ export default function AdvisorPage() {
                     <p className="text-gray-500 max-w-md mx-auto">{result.description}</p>
                 </motion.div>
 
+                {/* Social Benchmark Card */}
+                <AnimatePresence>
+                    {benchmark && (
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="mb-0"
+                        >
+                            <SocialRankCard data={benchmark} />
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+
+                {/* New Health Score Card */}
+                <AnimatePresence>
+                    {healthResult && (
+                        <div className="mb-6">
+                            <HealthScoreCard result={healthResult} />
+                        </div>
+                    )}
+                </AnimatePresence>
+
                 {/* AI Advice Section */}
                 <AnimatePresence>
                     {aiAdvice ? (
@@ -117,27 +155,28 @@ export default function AdvisorPage() {
                             <p className="text-purple-900 leading-relaxed whitespace-pre-line">{aiAdvice}</p>
                         </motion.div>
                     ) : (
-                        <div className="flex justify-center">
+                        <div className="flex justify-center flex-col items-center gap-3">
                             <motion.button
                                 whileHover={{ scale: 1.05 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={handleAskAI}
                                 disabled={isLoadingAi}
-                                className={`flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full font-bold shadow-lg shadow-purple-500/20 transition-all ${isLoadingAi ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-purple-500/40'
+                                className={`flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-full font-bold shadow-lg shadow-purple-500/20 transition-all ${isLoadingAi ? 'opacity-80 cursor-not-allowed' : 'hover:shadow-purple-500/40'
                                     }`}
                             >
                                 {isLoadingAi ? (
                                     <>
                                         <RefreshCcw className="w-5 h-5 animate-spin" />
-                                        กำลังวิเคราะห์ข้อมูล...
+                                        กำลังตรวจสุขภาพพอร์ต...
                                     </>
                                 ) : (
                                     <>
                                         <Sparkles className="w-5 h-5" />
-                                        ขอคำแนะนำจาก AI Expert (Gemini)
+                                        วิเคราะห์ & ตรวจสุขภาพพอร์ตเชิงลึก (AI Expert)
                                     </>
                                 )}
                             </motion.button>
+                            <p className="text-xs text-gray-400">Powered by Gemini 2.0 Flash</p>
                         </div>
                     )}
                 </AnimatePresence>
@@ -146,34 +185,48 @@ export default function AdvisorPage() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.3 }}
-                    className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden"
+                    className="space-y-4"
                 >
-                    <div className="bg-gray-50 p-4 border-b border-gray-200 flex items-center justify-between">
-                        <h3 className="font-bold text-gray-800">แผนที่แนะนำสำหรับคุณ</h3>
-                        <span className="text-xs font-medium px-2 py-1 bg-green-100 text-green-700 rounded-full animate-bounce">Recommended</span>
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                        <h3 className="font-bold text-gray-800 text-lg">แผนที่แนะนำสำหรับคุณ</h3>
+                        <span className="text-xs font-medium px-2 py-0.5 bg-green-100 text-green-700 rounded-full animate-pulse">Recommended</span>
                     </div>
-                    <div className="divide-y divide-gray-100">
+
+                    <div className="grid grid-cols-1 gap-4">
                         {recommendedPlans.map((plan, index) => (
                             <motion.div
                                 key={plan.id}
                                 initial={{ opacity: 0, x: -20 }}
                                 animate={{ opacity: 1, x: 0 }}
                                 transition={{ delay: 0.5 + (index * 0.1) }}
-                                className="p-4 hover:bg-gray-50 transition-colors flex justify-between items-center group"
+                                className="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 group"
                             >
-                                <div>
-                                    <div className="font-bold text-gray-900">{plan.name}</div>
-                                    <div className="text-sm text-gray-500">{plan.description}</div>
-                                    <div className="flex gap-2 mt-2 text-xs">
-                                        <span className={`px-2 py-0.5 rounded text-white ${plan.riskLevel === 'Low' ? 'bg-green-500' :
-                                            plan.riskLevel === 'Medium' ? 'bg-yellow-500' : 'bg-red-500'
+                                <div className="flex-1">
+                                    <div className="flex items-start justify-between md:justify-start gap-3 mb-2">
+                                        <div className="font-bold text-gray-900 text-lg group-hover:text-blue-600 transition-colors">{plan.name}</div>
+                                        <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${plan.riskLevel === 'Low' ? 'bg-green-100 text-green-700' :
+                                            plan.riskLevel === 'Medium' ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'
                                             }`}>
                                             เสี่ยง{plan.riskLevel === 'Low' ? 'ต่ำ' : plan.riskLevel === 'Medium' ? 'ปานกลาง' : 'สูง'}
                                         </span>
-                                        <span className="px-2 py-0.5 rounded bg-gray-200 text-gray-700">ผลตอบแทนคาดหวัง {plan.historicalReturn}%</span>
+                                    </div>
+                                    <div className="text-sm text-gray-500 mb-3 leading-relaxed">{plan.description}</div>
+
+                                    <div className="flex items-center gap-4 text-xs font-medium text-gray-500">
+                                        <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                                            <div className="w-1.5 h-1.5 rounded-full bg-blue-500"></div>
+                                            ผลตอบแทน {plan.historicalReturn}%
+                                        </div>
+                                        {plan.allocation && (
+                                            <div className="flex items-center gap-1.5 bg-gray-50 px-2 py-1 rounded-md">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-orange-500"></div>
+                                                หุ้น {plan.allocation.reduce((sum: number, item: any) => item.assetClass.includes('หุ้น') ? sum + item.percentage : sum, 0)}%
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
-                                <Link href={`/gpf-avc/plans?selected=${plan.id}`} className="px-4 py-2 bg-white text-blue-600 border border-blue-600 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium whitespace-nowrap">
+
+                                <Link href={`/gpf-avc/plans?selected=${plan.id}`} className="px-5 py-2.5 bg-blue-50 text-blue-600 rounded-xl font-bold hover:bg-blue-600 hover:text-white transition-all text-sm whitespace-nowrap text-center shadow-sm">
                                     ดูรายละเอียด
                                 </Link>
                             </motion.div>
@@ -195,12 +248,12 @@ export default function AdvisorPage() {
 
     // Render Quiz View
     return (
-        <div className="p-6 max-w-xl mx-auto min-h-[600px] flex flex-col">
+        <div className="py-6 max-w-xl mx-auto min-h-[600px] flex flex-col gap-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 mb-8"
+                className="flex items-center gap-4"
             >
                 <Link href="/gpf-avc" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
                     <ChevronLeft className="w-6 h-6 text-gray-600" />
@@ -212,7 +265,7 @@ export default function AdvisorPage() {
             </motion.div>
 
             {/* Progress Bar */}
-            <div className="w-full bg-gray-200 h-2 rounded-full mb-8 overflow-hidden">
+            <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                 <motion.div
                     className="bg-blue-600 h-2 rounded-full"
                     initial={{ width: 0 }}
@@ -236,18 +289,19 @@ export default function AdvisorPage() {
                             {currentQuestion.text}
                         </h2>
 
-                        <div className="space-y-3">
+                        <div className="flex flex-col gap-4">
                             {currentQuestion.options.map((option, idx) => (
                                 <motion.button
                                     key={idx}
-                                    whileHover={{ scale: 1.02, backgroundColor: "#eff6ff" }} // hover:bg-blue-50
+                                    whileHover={{ scale: 1.02, backgroundColor: "#f8fafc" }}
                                     whileTap={{ scale: 0.98 }}
                                     onClick={() => handleAnswer(option.score)}
-                                    className="w-full text-left p-4 rounded-xl border border-gray-200 hover:border-blue-500 hover:shadow-md transition-all group flex items-center justify-between bg-white"
+                                    className="w-full text-left p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-blue-500 transition-all group flex items-center justify-between bg-white relative overflow-hidden"
                                 >
-                                    <span className="text-gray-700 group-hover:text-blue-800 font-medium">{option.label}</span>
-                                    <div className="w-5 h-5 rounded-full border border-gray-300 group-hover:border-blue-500 group-hover:bg-blue-500 flex items-center justify-center transition-colors">
-                                        <div className="w-2 h-2 rounded-full bg-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <div className="absolute left-0 top-0 w-1 h-full bg-blue-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    <span className="text-gray-800 group-hover:text-blue-700 font-semibold text-lg pl-2 transition-colors">{option.label}</span>
+                                    <div className="w-6 h-6 rounded-full border-2 border-gray-200 group-hover:border-blue-500 flex items-center justify-center transition-colors">
+                                        <div className="w-3 h-3 rounded-full bg-blue-500 opacity-0 group-hover:opacity-100 scale-0 group-hover:scale-100 transition-all duration-300" />
                                     </div>
                                 </motion.button>
                             ))}
@@ -261,7 +315,7 @@ export default function AdvisorPage() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 0.5 }}
-                className="mt-8 p-4 bg-yellow-50 rounded-lg flex gap-3 text-xs text-yellow-800"
+                className="p-4 bg-yellow-50 rounded-lg flex gap-3 text-xs text-yellow-800"
             >
                 <AlertTriangle className="shrink-0 w-4 h-4" />
                 <p>การลงทุนมีความเสี่ยง ผู้ลงทุนควรทำความเข้าใจลักษณะสินค้า เงื่อนไขผลตอบแทน และความเสี่ยงก่อนตัดสินใจลงทุน</p>

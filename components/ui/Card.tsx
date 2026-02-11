@@ -12,7 +12,7 @@ export default function Card({ children, className, hover = true, glass = false 
     return (
         <div
             className={clsx(
-                'rounded-2xl p-6 border transition-all duration-300',
+                'rounded-2xl border transition-all duration-300',
                 glass ? 'glass' : 'card',
                 hover && 'hover:shadow-xl hover:-translate-y-1',
                 className

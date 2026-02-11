@@ -1,63 +1,63 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface FundData {
-    name: string;
-    value: number;
-    units: number;
-    navPerUnit: number;
+  name: string;
+  value: number;
+  units: number;
+  navPerUnit: number;
 }
 
 export interface MonthlySnapshot {
-    month: number; // 1-12
-    date: string;  // YYYY-MM-DD
-    funds: FundData[];
+  month: number; // 1-12
+  date: string;  // YYYY-MM-DD
+  funds: FundData[];
 }
 
 export interface PDFPortfolioData {
-    year: number;
-    monthlySnapshots: MonthlySnapshot[];
+  year: number;
+  monthlySnapshots: MonthlySnapshot[];
 }
 
 export interface Transaction {
-    date: string;
-    type: string;
-    fundName: string;
-    units: number;
-    nav: number;
-    amount: number;
+  date: string;
+  type: string;
+  fundName: string;
+  units: number;
+  nav: number;
+  amount: number;
 }
 
 export interface PDFExtractedData {
-    portfolioSnapshot: PDFPortfolioData;
-    transactions: Transaction[];
+  portfolioSnapshot: PDFPortfolioData;
+  transactions: Transaction[];
 }
 
 export async function extractPortfolioFromPDF(pdfDataUrl: string): Promise<PDFExtractedData> {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim();
+  const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY?.trim();
 
-    if (!apiKey) {
-        throw new Error('Gemini API key not found. Please add NEXT_PUBLIC_GEMINI_API_KEY to .env.local');
+  if (!apiKey) {
+    throw new Error('Gemini API key not found. Please add NEXT_PUBLIC_GEMINI_API_KEY to .env.local');
+  }
+
+  const genAI = new GoogleGenerativeAI(apiKey);
+  // const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
+
+  // Detect if it's a data URL or base64
+  let base64Data: string;
+  let mimeType = 'application/pdf';
+
+  if (pdfDataUrl.startsWith('data:')) {
+    const match = pdfDataUrl.match(/^data:(.*?);base64,(.*)$/);
+    if (!match) {
+      throw new Error('Invalid PDF data URL format');
     }
+    mimeType = match[1];
+    base64Data = match[2];
+  } else {
+    base64Data = pdfDataUrl;
+  }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash' });
-
-    // Detect if it's a data URL or base64
-    let base64Data: string;
-    let mimeType = 'application/pdf';
-
-    if (pdfDataUrl.startsWith('data:')) {
-        const match = pdfDataUrl.match(/^data:(.*?);base64,(.*)$/);
-        if (!match) {
-            throw new Error('Invalid PDF data URL format');
-        }
-        mimeType = match[1];
-        base64Data = match[2];
-    } else {
-        base64Data = pdfDataUrl;
-    }
-
-    const prompt = `
+  const prompt = `
 คุณเป็น AI ที่ช่วยอ่านข้อมูลพอร์ตการลงทุนจาก กบข. (กองทุนบำเหน็จบำนาญข้าราชการ)
 
 จากไฟล์ PDF กรุณาดึงข้อมูล **ทุกเดือน** ที่ปรากฏในตาราง:
@@ -143,55 +143,54 @@ export async function extractPortfolioFromPDF(pdfDataUrl: string): Promise<PDFEx
 - ตอบเฉพาะ JSON ไม่ต้องมีคำอธิบาย
 `;
 
-    const modelsToTry = [
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.5-pro'
-    ];
+  const modelsToTry = [
+    'gemini-1.5-flash',
+    'gemini-1.5-pro'
+  ];
 
-    let lastError = null;
+  let lastError = null;
 
-    for (const modelName of modelsToTry) {
-        try {
-            console.log(`🤖 Trying PDF extraction with ${modelName}...`);
-            const currentModel = genAI.getGenerativeModel({ model: modelName });
+  for (const modelName of modelsToTry) {
+    try {
+      console.log(`🤖 Trying PDF extraction with ${modelName}...`);
+      const currentModel = genAI.getGenerativeModel({ model: modelName });
 
-            const result = await currentModel.generateContent([
-                {
-                    inlineData: {
-                        data: base64Data,
-                        mimeType: mimeType
-                    }
-                },
-                { text: prompt }
-            ]);
+      const result = await currentModel.generateContent([
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: mimeType
+          }
+        },
+        { text: prompt }
+      ]);
 
-            const response = await result.response;
-            const text = response.text();
-            console.log(`✅ Success with ${modelName}`);
+      const response = await result.response;
+      const text = response.text();
+      console.log(`✅ Success with ${modelName}`);
 
-            // Extract JSON from response
-            const jsonMatch = text.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('AI response does not contain valid JSON');
-            }
+      // Extract JSON from response
+      const jsonMatch = text.match(/\{[\s\S]*\}/);
+      if (!jsonMatch) {
+        throw new Error('AI response does not contain valid JSON');
+      }
 
-            const portfolioData = JSON.parse(jsonMatch[0]) as PDFPortfolioData;
+      const portfolioData = JSON.parse(jsonMatch[0]) as PDFPortfolioData;
 
-            // For now, return empty transactions array
-            // We can add transaction extraction later if needed
-            return {
-                portfolioSnapshot: portfolioData,
-                transactions: []
-            };
+      // For now, return empty transactions array
+      // We can add transaction extraction later if needed
+      return {
+        portfolioSnapshot: portfolioData,
+        transactions: []
+      };
 
-        } catch (error: any) {
-            console.warn(`❌ Failed with ${modelName}:`, error.message);
-            lastError = error;
-        }
+    } catch (error: any) {
+      console.warn(`❌ Failed with ${modelName}:`, error.message);
+      lastError = error;
     }
+  }
 
-    // If all models failed
-    console.error('❌ All Gemini models failed. Last error:', lastError);
-    throw new Error('ไม่สามารถอ่านข้อมูลจาก PDF ได้: ' + (lastError instanceof Error ? lastError.message : 'Unknown error'));
+  // If all models failed
+  console.error('❌ All Gemini models failed. Last error:', lastError);
+  throw new Error('ไม่สามารถอ่านข้อมูลจาก PDF ได้: ' + (lastError instanceof Error ? lastError.message : 'Unknown error'));
 }

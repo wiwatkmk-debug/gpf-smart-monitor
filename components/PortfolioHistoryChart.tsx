@@ -10,8 +10,35 @@ interface PortfolioHistoryChartProps {
 }
 
 export default function PortfolioHistoryChart({ history }: PortfolioHistoryChartProps) {
-    // If no history, show empty state or mock trend
-    const data = history.length > 0 ? history.map(h => ({
+    const [timeRange, setTimeRange] = React.useState<'1M' | '6M' | '1Y' | 'ALL'>('ALL');
+
+    // Filter logic
+    const filteredHistory = React.useMemo(() => {
+        if (!history || history.length === 0) return [];
+
+        const now = new Date();
+        let cutoffDate = new Date();
+
+        switch (timeRange) {
+            case '1M':
+                cutoffDate.setMonth(now.getMonth() - 1);
+                break;
+            case '6M':
+                cutoffDate.setMonth(now.getMonth() - 6);
+                break;
+            case '1Y':
+                cutoffDate.setFullYear(now.getFullYear() - 1);
+                break;
+            case 'ALL':
+            default:
+                return history;
+        }
+
+        return history.filter(h => new Date(h.date) >= cutoffDate);
+    }, [history, timeRange]);
+
+    // Map to chart data
+    const data = filteredHistory.length > 0 ? filteredHistory.map(h => ({
         date: new Date(h.date).toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
         value: h.totalBalance
     })) : [];
@@ -50,10 +77,18 @@ export default function PortfolioHistoryChart({ history }: PortfolioHistoryChart
                     <p className="text-sm text-gray-500">มูลค่าสินทรัพย์สะสมย้อนหลัง</p>
                 </div>
                 <div className="flex gap-2">
-                    <button className="px-3 py-1 text-xs font-medium bg-blue-50 text-blue-600 rounded-full">1M</button>
-                    <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 rounded-full">6M</button>
-                    <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 rounded-full">1Y</button>
-                    <button className="px-3 py-1 text-xs font-medium text-gray-500 hover:bg-gray-50 rounded-full">ทั้งหมด</button>
+                    {(['1M', '6M', '1Y', 'ALL'] as const).map((range) => (
+                        <button
+                            key={range}
+                            onClick={() => setTimeRange(range)}
+                            className={`px-3 py-1 text-xs font-medium rounded-full transition-colors ${timeRange === range
+                                    ? 'bg-blue-50 text-blue-600'
+                                    : 'text-gray-500 hover:bg-gray-50'
+                                }`}
+                        >
+                            {range === 'ALL' ? 'ทั้งหมด' : range}
+                        </button>
+                    ))}
                 </div>
             </div>
 
@@ -82,6 +117,7 @@ export default function PortfolioHistoryChart({ history }: PortfolioHistoryChart
                             tickLine={false}
                             tick={{ fill: '#9CA3AF', fontSize: 12 }}
                             tickFormatter={(value) => `฿${(value / 1000000).toFixed(1)}M`}
+                            domain={['auto', 'auto']}
                         />
                         <Tooltip content={<CustomTooltip />} />
                         <Area

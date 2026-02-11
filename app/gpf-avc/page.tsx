@@ -5,13 +5,24 @@ import { UserButton, SignedIn, SignedOut, SignInButton } from "@clerk/nextjs";
 import React from 'react';
 import { MOCK_GPF_ACCOUNT, INVESTMENT_PLANS } from '@/lib/mock-gpf-data';
 import Link from 'next/link';
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
+import {
+    YAxis,
+    CartesianGrid,
+    Tooltip,
+    ResponsiveContainer,
+    PieChart,
+    Pie,
+    Cell
+} from 'recharts';
 import { motion } from 'framer-motion';
 import { getPortfolio, updatePortfolioHoldings } from '@/app/actions/portfolio';
 import ImageImportModal from '@/components/ImageImportModal';
 import PortfolioHistoryChart from '@/components/PortfolioHistoryChart';
+import PDFDownloadButton from '@/components/reporting/PDFDownloadButton';
 
 export default function GPFAVCPage() {
+    // ... existing code ...
+
     const [isImportModalOpen, setImportModalOpen] = React.useState(false);
     const [holdings, setHoldings] = React.useState<any[]>([]);
     const [localBalance, setLocalBalance] = React.useState(0);
@@ -81,14 +92,17 @@ export default function GPFAVCPage() {
     }
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="py-6 flex flex-col gap-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex justify-between items-center mb-6"
+                className="flex justify-between items-center"
             >
                 <div>
-                    <h1 className="text-2xl font-bold text-gray-900">ระบบออมเพิ่ม กบข. (GPF AVC)</h1>
+                    <h1 className="text-2xl font-bold text-gray-900">
+                        ระบบออมเพิ่ม กบข. <br />
+                        (GPF AVC)
+                    </h1>
                     <p className="text-gray-500">จัดการแผนการลงทุนและวางแผนเกษียณ</p>
                 </div>
                 <div className="flex items-center gap-4">
@@ -122,7 +136,7 @@ export default function GPFAVCPage() {
                 className="grid grid-cols-1 md:grid-cols-3 gap-6"
             >
                 {/* Balance Card */}
-                <motion.div variants={item} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                <motion.div variants={item} className="card">
                     <div className="text-sm text-gray-500 mb-1">ยอดเงินสะสมรวม</div>
                     <div className="text-3xl font-bold text-blue-600">
                         ฿{localBalance.toLocaleString('th-TH', { minimumFractionDigits: 2 })}
@@ -139,7 +153,7 @@ export default function GPFAVCPage() {
                 </motion.div>
 
                 {/* Current Plan Card */}
-                <motion.div variants={item} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                <motion.div variants={item} className="card">
                     <div className="flex justify-between items-start">
                         <div>
                             <div className="text-sm text-gray-500 mb-1">แผนการลงทุนปัจจุบัน</div>
@@ -161,7 +175,7 @@ export default function GPFAVCPage() {
                 </motion.div>
 
                 {/* Contribution Rate Card */}
-                <motion.div variants={item} className="bg-white rounded-xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+                <motion.div variants={item} className="card">
                     <div className="flex justify-between items-start">
                         <div>
                             <div className="text-sm text-gray-500 mb-1">อัตราออมเพิ่ม (ออมสิน)</div>
@@ -170,9 +184,9 @@ export default function GPFAVCPage() {
                                 คิดเป็น ฿{(account.salary * account.contributionRate / 100).toLocaleString()} / เดือน
                             </div>
                         </div>
-                        <button className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
+                        <Link href="/gpf-avc/contributions" className="text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline">
                             เปลี่ยนอัตรา
-                        </button>
+                        </Link>
                     </div>
                 </motion.div>
             </motion.div>
@@ -186,8 +200,8 @@ export default function GPFAVCPage() {
             >
 
                 {/* Left Column: Plan Allocation & History */}
-                <div className="col-span-1 lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                <div className="col-span-1 lg:col-span-2 flex flex-col gap-6">
+                    <div className="card">
                         <div className="flex justify-between items-center mb-4">
                             <h2 className="text-lg font-bold text-gray-900">
                                 {holdings.length > 0 ? 'มูลค่าปัจจุบันตามกองทุน' : 'สัดส่วนการลงทุนปัจจุบัน'}
@@ -196,7 +210,7 @@ export default function GPFAVCPage() {
                         </div>
 
                         {holdings.length > 0 ? (
-                            <div className="space-y-4">
+                            <div className="flex flex-col gap-4">
                                 {holdings.map((h, idx) => (
                                     <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                                         <div>
@@ -273,11 +287,11 @@ export default function GPFAVCPage() {
                 </div>
 
                 {/* Right Column: Quick Actions & Projections */}
-                <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                     {/* Quick Actions */}
-                    <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-100">
+                    <div className="card">
                         <h2 className="text-lg font-bold text-gray-900 mb-4">เมนูด่วน</h2>
-                        <div className="space-y-2">
+                        <div className="flex flex-col gap-2">
                             <button
                                 onClick={() => setImportModalOpen(true)}
                                 className="block w-full text-left px-4 py-3 bg-indigo-50 text-indigo-700 rounded-lg hover:bg-indigo-100 transition-colors bg-opacity-70 flex items-center gap-2"
@@ -309,11 +323,20 @@ export default function GPFAVCPage() {
                                     <div className="text-xs opacity-70">คำนวณเงินเกษียณ</div>
                                 </div>
                             </Link>
+
+                            <div className="pt-2 border-t border-gray-100">
+                                <PDFDownloadButton
+                                    user={{ id: account.memberId || 'UNKNOWN', firstName: 'สมาชิก', lastName: 'กบข.' }}
+                                    holdings={holdings}
+                                    balance={localBalance}
+                                    currentPlanId={currentPlan.id}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Mini Projection */}
-                    <div className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-xl shadow-lg p-6 text-white relative overflow-hidden group">
+                    <div className="bg-gradient-to-br from-indigo-900 to-blue-900 rounded-xl shadow-lg text-white relative overflow-hidden group" style={{ padding: '24px' }}>
                         <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                             <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 20 20"><path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"></path></svg>
                         </div>
@@ -337,9 +360,9 @@ export default function GPFAVCPage() {
                             ></motion.div>
                         </div>
 
-                        <button className="w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/30 backdrop-blur-sm">
+                        <Link href="/gpf-avc/retirement" className="block w-full py-2 bg-white/10 hover:bg-white/20 rounded-lg text-sm transition-colors border border-white/30 backdrop-blur-sm text-center">
                             ดูรายละเอียดการคำนวณ
-                        </button>
+                        </Link>
                     </div>
                 </div>
             </motion.div>

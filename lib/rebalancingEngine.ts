@@ -49,7 +49,7 @@ export function generateRebalancingRecommendations(
     // Generate recommendations for each fund
     funds.forEach(fund => {
         const targetForType = targetAllocation[fund.type] || 0;
-        const currentForType = currentByType[fund.type] || 0;
+        // const currentForType = currentByType[fund.type] || 0;
 
         // Calculate proportional adjustment for this fund within its type
         const fundsOfSameType = funds.filter(f => f.type === fund.type);
@@ -62,10 +62,10 @@ export function generateRebalancingRecommendations(
         if (Math.abs(allocationDiff) > 2) { // Only recommend if difference > 2%
             if (allocationDiff > 0) {
                 action = 'buy';
-                reason = `เพิ่มสัดส่วนเพื่อให้สอดคล้องกับอายุและความเสี่ยงที่รับได้`;
+                reason = `เพิ่มเงินลงทุนเพื่อให้เหมาะกับอายุ`;
             } else {
                 action = 'sell';
-                reason = `ลดสัดส่วนเพื่อควบคุมความเสี่ยงให้เหมาะสมกับอายุ`;
+                reason = `ลดเงินลงทุนเพื่อให้เหมาะกับอายุ`;
             }
 
             const amountToAdjust = (allocationDiff / 100) * totalValue;

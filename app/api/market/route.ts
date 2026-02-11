@@ -13,10 +13,15 @@ export async function GET() {
                 change: 12.5 + (variance / 10),
                 changePercent: 0.93 + (variance / 1000),
             },
-            sp500: {
-                value: 5250.5 + (variance * 2),
-                change: 25.3 + (variance / 5),
-                changePercent: 0.48 + (variance / 2000),
+            msci: {
+                value: 3450.75 + (variance * 1.5),
+                change: 15.3 + (variance / 8),
+                changePercent: 0.45 + (variance / 2500),
+            },
+            globalBond: {
+                value: 4.25 + (variance / 100), // Yield %
+                change: 0.05 + (variance / 500),
+                changePercent: 1.2 + (variance / 4000),
             },
             gold: {
                 value: 2050.75 - (variance / 2),

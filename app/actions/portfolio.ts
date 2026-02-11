@@ -14,6 +14,10 @@ export async function getPortfolio(): Promise<GPFAccount> {
     }
 
     try {
+        // Check if this is the first user ever (to make them Admin)
+        const userCount = await prisma.user.count();
+        const role = userCount === 0 ? 'ADMIN' : 'USER';
+
         // 1. Ensure User exists in our DB
         // We use upsert to update email if it changed, or create if new
         const dbUser = await prisma.user.upsert({
@@ -22,6 +26,7 @@ export async function getPortfolio(): Promise<GPFAccount> {
             create: {
                 id: user.id,
                 email: user.emailAddresses[0]?.emailAddress || "no-email",
+                role: role // First user is Admin
             }
         });
 
@@ -48,7 +53,9 @@ export async function getPortfolio(): Promise<GPFAccount> {
             ...MOCK_GPF_ACCOUNT,
             totalBalance: dbPortfolio.totalBalance,
             holdings: (dbPortfolio.holdings as unknown as FundHolding[]) || [],
-            history: (dbPortfolio.history as unknown as HistorySnapshot[]) || [],
+            history: (dbPortfolio.history && (dbPortfolio.history as any).length > 0)
+                ? (dbPortfolio.history as unknown as HistorySnapshot[])
+                : MOCK_GPF_ACCOUNT.history || [],
             lastUpdated: dbPortfolio.lastUpdated.toISOString()
         };
 

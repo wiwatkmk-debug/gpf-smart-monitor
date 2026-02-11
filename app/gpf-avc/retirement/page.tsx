@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { MOCK_GPF_ACCOUNT, INVESTMENT_PLANS } from '@/lib/mock-gpf-data';
 import Link from 'next/link';
 import {
@@ -14,28 +14,34 @@ import {
     ResponsiveContainer,
     Legend
 } from 'recharts';
-import { ChevronLeft, TrendingUp, Info } from 'lucide-react';
+import { ChevronLeft, Info } from 'lucide-react';
 
 import { motion } from 'framer-motion';
 
+// Define a type for simulation data
+interface SimulationPoint {
+    year: number;
+    age: number;
+    amount: number;
+    bear: number;
+    bull: number;
+    contribution: number;
+}
+
 export default function RetirementPage() {
-    const [currentAge, setCurrentAge] = useState(35);
+    const [currentAge] = useState(35);
     const [retireAge, setRetireAge] = useState(60);
     const [salary, setSalary] = useState(MOCK_GPF_ACCOUNT.salary);
-    const [balance, setBalance] = useState(MOCK_GPF_ACCOUNT.totalBalance);
-    const [contributionRate, setContributionRate] = useState(MOCK_GPF_ACCOUNT.contributionRate);
+    const [balance] = useState(MOCK_GPF_ACCOUNT.totalBalance);
+    const [contributionRate] = useState(MOCK_GPF_ACCOUNT.contributionRate);
     const [salaryGrowth, setSalaryGrowth] = useState(3); // 3% annual growth
     const [planId, setPlanId] = useState(MOCK_GPF_ACCOUNT.currentPlanId);
-    const [simulationData, setSimulationData] = useState<any[]>([]);
+    const [simulationData, setSimulationData] = useState<SimulationPoint[]>([]);
 
     const selectedPlan = INVESTMENT_PLANS.find(p => p.id === planId) || INVESTMENT_PLANS[0];
 
-    useEffect(() => {
-        runSimulation();
-    }, [currentAge, retireAge, salary, balance, contributionRate, salaryGrowth, planId]);
-
-    const runSimulation = () => {
-        const data: any[] = [];
+    const runSimulation = useCallback(() => {
+        const data: SimulationPoint[] = [];
         let currentBalance = balance;
         let currentSalary = salary;
         const years = retireAge - currentAge;
@@ -74,19 +80,23 @@ export default function RetirementPage() {
             currentSalary *= (1 + salaryGrowth / 100);
         }
         setSimulationData(data);
-    };
+    }, [balance, contributionRate, currentAge, retireAge, salary, salaryGrowth, selectedPlan]);
+
+    useEffect(() => {
+        runSimulation();
+    }, [runSimulation]);
 
     const finalAmount = simulationData.length > 0 ? simulationData[simulationData.length - 1].amount : 0;
     const targetAmount = 10000000; // Mock target 10MB
     const isTargetMet = finalAmount >= targetAmount;
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="py-6 flex flex-col gap-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 mb-6 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-2xl border border-indigo-100"
+                className="flex items-center gap-4 bg-gradient-to-r from-indigo-50 to-white p-4 rounded-2xl border border-indigo-100"
             >
                 <Link href="/gpf-avc" className="p-2 hover:bg-white rounded-full transition-all shadow-sm">
                     <ChevronLeft className="w-6 h-6 text-indigo-600" />
@@ -103,14 +113,13 @@ export default function RetirementPage() {
                     initial={{ opacity: 0, x: -20 }}
                     animate={{ opacity: 1, x: 0 }}
                     transition={{ delay: 0.2 }}
-                    className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-6"
+                    className="card flex flex-col gap-6"
                 >
                     <h2 className="font-bold text-lg text-gray-800 flex items-center gap-2">
                         <span className="w-6 h-6 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs">1</span>
                         กำหนดตัวแปร (Parameters)
                     </h2>
-
-                    <div className="space-y-6">
+                    <div className="flex flex-col gap-6">
                         <div className="bg-slate-50 p-4 rounded-xl space-y-2 border border-slate-100">
                             <label className="block text-sm font-bold text-gray-700">อายุปัจจุบัน vs เกษียณ</label>
                             <div className="flex items-center gap-4">
@@ -175,7 +184,7 @@ export default function RetirementPage() {
                     initial={{ opacity: 0, scale: 0.95 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ delay: 0.3 }}
-                    className="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6 flex flex-col"
+                    className="lg:col-span-2 card flex flex-col"
                 >
                     <div className="flex justify-between items-start mb-6">
                         <div>

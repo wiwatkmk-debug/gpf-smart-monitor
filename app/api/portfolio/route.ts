@@ -1,41 +1,47 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { mockPortfolio, mockHistoricalData } from '@/lib/mockData';
+import { getPortfolio } from '@/app/actions/portfolio';
 
 export async function GET(request: NextRequest) {
     try {
-        // Check if custom data is provided via request header
-        const customDataHeader = request.headers.get('x-custom-portfolio');
+        console.log("Fetching portfolio data...");
 
-        if (customDataHeader) {
-            try {
-                // Decode from base64 (supports Thai characters)
-                const decoded = decodeURIComponent(escape(atob(customDataHeader)));
-                const customData = JSON.parse(decoded);
+        // 1. Fetch real portfolio data from DB via Server Action
+        const gpfAccount = await getPortfolio();
 
-                // Build portfolio from custom data
-                const portfolio = {
-                    ...mockPortfolio,
-                    funds: customData.funds,
-                    totalValue: customData.totalValue,
-                };
-
-                return NextResponse.json({
-                    portfolio,
-                    historical: mockHistoricalData,
-                });
-            } catch (parseError) {
-                console.error('Error parsing custom data:', parseError);
-                // Fall through to default data
-            }
-        }
-
-        // Return default portfolio data from mockData.ts
-        const portfolioData = {
-            portfolio: mockPortfolio,
-            historical: mockHistoricalData,
+        // 2. Map GPFAccount (Backend) to PortfolioData (Frontend)
+        const portfolio = {
+            totalValue: gpfAccount.totalBalance,
+            todayChange: 0, // Not tracked in DB yet
+            todayChangePercent: 0,
+            totalReturn: 0, // derived from holdings?
+            totalReturnPercent: 0,
+            lastUpdated: gpfAccount.lastUpdated ? new Date(gpfAccount.lastUpdated) : new Date(),
+            funds: (gpfAccount.holdings || []).map((h, index) => ({
+                id: `fund-${index}`, // Temporary ID
+                name: h.name,
+                code: h.name.substring(0, 10), // Temporary Generic Code
+                type: 'equity', // Defaulting to equity for now, need lookup logic
+                value: h.value,
+                units: h.units,
+                navPerUnit: h.navPerUnit,
+                allocation: gpfAccount.totalBalance > 0 ? (h.value / gpfAccount.totalBalance) * 100 : 0,
+                return1M: 0,
+                return3M: 0,
+                return6M: 0,
+                return1Y: 0,
+                returnYTD: 0,
+                riskLevel: 3
+            }))
         };
 
-        return NextResponse.json(portfolioData);
+        // 3. Fetch historical data (currently part of getPortfolio result, but let's be explicit)
+        // In the future, we might want to separate history fetching if it gets too heavy
+        const historical = gpfAccount.history || [];
+
+        return NextResponse.json({
+            portfolio,
+            historical,
+        });
     } catch (error) {
         console.error('Error fetching portfolio data:', error);
         return NextResponse.json(

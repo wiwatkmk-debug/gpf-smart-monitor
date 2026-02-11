@@ -7,13 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ... existing datasource ...
+
+enum Role {
+  USER
+  ADMIN
+  SUPPORT
+}
+
+enum UserStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum SubscriptionPlan {
+  FREE
+  PREMIUM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+}
+
 model User {
-  id        String   @id // This will be the Clerk User ID
-  email     String   @unique
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id        String     @id // This will be the Clerk User ID
+  email     String     @unique
+  role      Role       @default(USER)
+  status    UserStatus @default(PENDING)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  // Subscription Fields
+  subscriptionPlan    SubscriptionPlan   @default(FREE)
+  subscriptionStatus  SubscriptionStatus @default(ACTIVE)
+  subscriptionEndsAt  DateTime?
+  isTrial             Boolean            @default(true)
+
+  // Personal Info
+  name                String?
+  memberId            String?
+  phoneNumber         String?
+  
+  // Financial Info
+  salary              Float              @default(0)
+  contributionRate    Float              @default(3)
+
+  // Demographics for Benchmarking
+  birthDate           DateTime?
 
   portfolio Portfolio?
+  subscriptionRequests SubscriptionRequest[]
 }
 
 model Portfolio {
@@ -26,4 +72,37 @@ model Portfolio {
   history      Json     @default("[]") // Storing chart history as JSON
   
   lastUpdated  DateTime @default(now())
+}
+
+model SystemConfig {
+  key         String   @id
+  value       String
+  description String?
+  updatedAt   DateTime @updatedAt
+}
+
+enum RequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PlanType {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+}
+
+model SubscriptionRequest {
+  id        String        @id @default(cuid())
+  userId    String
+  user      User          @relation(fields: [userId], references: [id])
+  
+  plan      PlanType
+  price     Float
+  slipImage String        // Base64 string for MVP
+  status    RequestStatus @default(PENDING)
+  
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }

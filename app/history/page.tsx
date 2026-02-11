@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { TrendingUp, Calendar, BarChart3, ArrowLeft, Trash2 } from 'lucide-react';
+import { TrendingUp, Calendar, BarChart3, ArrowLeft } from 'lucide-react';
 import { loadMonthlyData, deleteSnapshotsByYear, getAllYears, getLatestSnapshotForYear, type MonthlySnapshot } from '@/lib/historical-storage';
 
 interface YearSummary {
@@ -115,10 +115,10 @@ export default function HistoryPage() {
     const maxValue = Math.max(...yearlyData.map(d => d.totalValue));
 
     return (
-        <div className="min-h-screen p-4 md:p-6 lg:p-8">
-            <div className="max-w-6xl mx-auto">
+        <div className="min-h-screen py-6 md:py-8" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
+            <div className="max-w-6xl mx-auto flex flex-col gap-6">
                 {/* Header */}
-                <div className="mb-6">
+                <div className="">
                     <button
                         onClick={() => router.push('/')}
                         className="mb-4 flex items-center gap-2 text-sm hover:opacity-70 transition-opacity"
@@ -141,12 +141,9 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Summary Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     {/* Latest Value */}
-                    <div className="rounded-xl p-4 border" style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--border-color)'
-                    }}>
+                    <div className="card">
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -164,10 +161,7 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Growth */}
-                    <div className="rounded-xl p-4 border" style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--border-color)'
-                    }}>
+                    <div className="card">
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -185,10 +179,7 @@ export default function HistoryPage() {
                     </div>
 
                     {/* Years Tracked */}
-                    <div className="rounded-xl p-4 border" style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--border-color)'
-                    }}>
+                    <div className="card">
                         <div className="flex items-start justify-between">
                             <div>
                                 <p className="text-sm mb-1" style={{ color: 'var(--text-secondary)' }}>
@@ -207,10 +198,7 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Timeline Chart */}
-                <div className="rounded-xl p-6 mb-6 border" style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
-                }}>
+                <div className="card">
                     <h2 className="text-xl font-semibold mb-4" style={{ color: 'var(--text-primary)' }}>
                         เส้นเวลามูลค่าพอร์ต
                     </h2>
@@ -247,9 +235,10 @@ export default function HistoryPage() {
                 </div>
 
                 {/* Data Table */}
-                <div className="rounded-xl overflow-hidden border mb-6" style={{
+                <div className="rounded-xl overflow-hidden border" style={{
                     backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
+                    borderColor: 'var(--border-color)',
+                    padding: '0' // Override padding for table container
                 }}>
                     <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
                         <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>
@@ -328,7 +317,8 @@ export default function HistoryPage() {
                 {/* Monthly Details */}
                 <div className="rounded-xl border overflow-hidden" style={{
                     backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--border-color)'
+                    borderColor: 'var(--border-color)',
+                    padding: '0' // Override padding for accordion container
                 }}>
                     <div className="p-4 border-b" style={{ borderColor: 'var(--border-color)' }}>
                         <h2 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>

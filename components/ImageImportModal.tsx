@@ -2,7 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Upload, X, Check, Loader2, AlertCircle, FileText, Image as ImageIcon, Save } from 'lucide-react';
+import { Upload, X, Loader2, AlertCircle, FileText, Image as ImageIcon, Save } from 'lucide-react';
 import { extractPortfolioFromImage, ExtractedPortfolioData, ExtractedFundData } from '@/app/actions/extract-portfolio';
 import { FundHolding } from '@/types/gpf';
 
@@ -51,6 +51,8 @@ export default function ImageImportModal({ isOpen, onClose, onSave }: ImageImpor
 
         // Convert to FundHolding format
         const holdings: FundHolding[] = extractedData.funds.map(fund => ({
+            fundCode: fund.name, // Use name as fundCode for now
+            fundName: fund.name,
             name: fund.name,
             value: fund.value,
             units: fund.units,
@@ -172,6 +174,7 @@ export default function ImageImportModal({ isOpen, onClose, onSave }: ImageImpor
                                         </h3>
                                         <div className="relative rounded-xl overflow-hidden border border-gray-200 bg-gray-100">
                                             {imagePreview && (
+                                                /* eslint-disable-next-line @next/next/no-img-element */
                                                 <img src={imagePreview} alt="Preview" className="w-full h-auto object-contain max-h-[400px]" />
                                             )}
                                         </div>

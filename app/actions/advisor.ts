@@ -3,6 +3,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { GPFAccount, InvestmentPlan } from '@/types/gpf';
 import { RiskResult } from '@/lib/risk-engine';
+import { currentUser } from '@clerk/nextjs/server';
 
 interface AdviceRequest {
     riskProfile: RiskResult;
@@ -12,6 +13,17 @@ interface AdviceRequest {
 }
 
 export async function generateInvestmentAdvice(data: AdviceRequest): Promise<string> {
+    const user = await currentUser();
+    if (!user) return "กรุณาเข้าสู่ระบบก่อนใช้งาน";
+
+    // 1. Check Subscription
+    const { checkSubscription } = await import('@/lib/subscription');
+    const sub = await checkSubscription(user.id);
+
+    if (!sub.allowed) {
+        return `⚠️ ขออภัย สิทธิ์การใช้งานของคุณหมดอายุแล้ว (${sub.reason}) กรุณาติดต่อ Admin เพื่อต่ออายุ`;
+    }
+
     const apiKey = process.env.GEMINI_API_KEY; // Use server-side key
 
     if (!apiKey) {
@@ -20,12 +32,15 @@ export async function generateInvestmentAdvice(data: AdviceRequest): Promise<str
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+    // ... existing logic
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" }); // Use faster/newer model
 
     // Prepare context for AI
     const portfolioSummary = data.currentPortfolio.holdings && data.currentPortfolio.holdings.length > 0
         ? data.currentPortfolio.holdings.map(h => `- ${h.name}: ${h.value.toLocaleString()} THB (${((h.value / data.currentPortfolio.totalBalance) * 100).toFixed(1)}%)`).join('\n')
         : "No detailed holdings available (Mock Data)";
+
+    // ... continue code code
 
     const historySummary = data.currentPortfolio.history && data.currentPortfolio.history.length > 0
         ? `History: Growing from ${data.currentPortfolio.history[0]?.totalBalance.toLocaleString()} to ${data.currentPortfolio.totalBalance.toLocaleString()}`
@@ -69,5 +84,75 @@ export async function generateInvestmentAdvice(data: AdviceRequest): Promise<str
     } catch (error) {
         console.error('Gemini AI Error:', error);
         return "ขออภัย ระบบ AI ไม่สามารถวิเคราะห์ข้อมูลได้ในขณะนี้ กรุณาลองใหม่ภายหลัง";
+    }
+}
+
+export interface HealthCheckResult {
+    grade: string; // A, B, C, D, F
+    score: number; // 0-100
+    color: string; // hex code or tailwind class
+    summary: string;
+    keyFactors: { name: string; status: 'GOOD' | 'WARNING' | 'CRITICAL'; desc: string }[];
+}
+
+export async function analyzePortfolioHealth(data: AdviceRequest): Promise<HealthCheckResult> {
+    const user = await currentUser();
+    if (!user) throw new Error("Unauthorized");
+
+    const { checkSubscription } = await import('@/lib/subscription');
+    const sub = await checkSubscription(user.id);
+    if (!sub.allowed) throw new Error("Subscription Expired");
+
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) throw new Error("API Key missing");
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+        model: "gemini-2.0-flash",
+        generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const prompt = `
+        You are a harsh but fair financial teacher grading a student's investment portfolio.
+        Analyze this GPF (Government Pension Fund) member's portfolio and give it a letter grade (A-F).
+
+        **Profile:**
+        - Risk Level: ${data.riskProfile.label}
+        - Current Plan: ${data.currentPortfolio.currentPlanId}
+        - Balance: ${data.currentPortfolio.totalBalance.toLocaleString()} THB
+        - User Answers: ${JSON.stringify(data.userQuestionsAndAnswers)}
+
+        **Criteria for Grading:**
+        - **Consistency**: Does plan match risk level? (Mismatch = penalty)
+        - **Diversification**: Is the plan diversified? (Single asset = penalty)
+        - **Sufficiency**: Based on balance/age (infer from start date), will they have enough?
+
+        **Output JSON Schema:**
+        {
+            "grade": "A" | "B" | "C" | "D" | "F",
+            "score": number (0-100),
+            "color": "text-emerald-600" | "text-blue-600" | "text-yellow-600" | "text-orange-600" | "text-red-600",
+            "summary": "Short 2-sentence teacher's comment in Thai",
+            "keyFactors": [
+                { "name": "Risk Compatibility", "status": "GOOD" | "WARNING" | "CRITICAL", "desc": "Brief reason in Thai" },
+                { "name": "Diversification", "status": "GOOD" | "WARNING" | "CRITICAL", "desc": "Brief reason in Thai" },
+                { "name": "Retirement Readiness", "status": "GOOD" | "WARNING" | "CRITICAL", "desc": "Brief reason in Thai" }
+            ]
+        }
+    `;
+
+    try {
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        return JSON.parse(response.text());
+    } catch (error) {
+        console.error("Health Check Error:", error);
+        return {
+            grade: "?",
+            score: 0,
+            color: "text-gray-400",
+            summary: "ระบบไม่สามารถประมวลผลได้ในขณะนี้",
+            keyFactors: []
+        };
     }
 }

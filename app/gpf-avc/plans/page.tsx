@@ -62,12 +62,12 @@ export default function PlanSelectionPage() {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="py-6 space-y-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
             {/* Header */}
             <motion.div
                 initial={{ opacity: 0, y: -20 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex items-center gap-4 mb-6 bg-gradient-to-r from-blue-50 to-white p-4 rounded-2xl border border-blue-100"
+                className="flex items-center gap-4 mb-10 bg-gradient-to-r from-blue-50 to-white p-4 rounded-2xl border border-blue-100"
             >
                 <Link href="/gpf-avc" className="p-2 hover:bg-white rounded-full transition-all shadow-sm">
                     <ChevronLeft className="w-6 h-6 text-blue-600" />
@@ -168,7 +168,7 @@ export default function PlanSelectionPage() {
                                     'bg-green-500'
                                 }`} />
 
-                            <div className="p-6 flex-1 flex flex-col">
+                            <div className="p-10 md:p-20 flex-1 flex flex-col">
                                 <div className="flex justify-between items-start mb-4">
                                     <div className={`px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5
                       ${plan.riskLevel === 'High' ? 'bg-red-50 text-red-700 border border-red-100' :
@@ -207,11 +207,10 @@ export default function PlanSelectionPage() {
 
                                 {/* Allocation Visual */}
                                 <div className="mb-6">
-                                    <div className="text-xs font-bold text-gray-900 mb-3 flex justify-between">
+                                    <div className="text-sm font-bold text-gray-900 mb-4 flex justify-between items-end">
                                         <span>สัดส่วนการลงทุน</span>
-                                        <span className="text-gray-400 font-normal">ละเอียด</span>
                                     </div>
-                                    <div className="flex h-3 rounded-full overflow-hidden w-full bg-gray-100 shadow-inner">
+                                    <div className="flex h-6 rounded-full overflow-hidden w-full bg-gray-100 shadow-inner ring-1 ring-black/5">
                                         {plan.allocation.map((item, idx) => (
                                             <motion.div
                                                 key={idx}
@@ -219,23 +218,26 @@ export default function PlanSelectionPage() {
                                                 animate={{ width: `${item.percentage}%` }}
                                                 transition={{ duration: 1, delay: 0.5 + (idx * 0.1) }}
                                                 style={{ backgroundColor: getColorForAsset(item.assetClass) }}
-                                                className="h-full relative group/segment"
-                                                title={`${item.assetClass}: ${item.percentage}%`}
-                                            />
+                                                className="h-full relative group/segment first:rounded-l-full last:rounded-r-full hover:brightness-110 transition-all cursor-help"
+                                            >
+                                                {/* Tooltip */}
+                                                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs py-1 px-2 rounded opacity-0 group-hover/segment:opacity-100 whitespace-nowrap transition-opacity z-10 pointer-events-none">
+                                                    {item.assetClass}: {item.percentage}%
+                                                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-gray-900"></div>
+                                                </div>
+                                            </motion.div>
                                         ))}
                                     </div>
-                                    <div className="mt-3 flex flex-wrap gap-x-4 gap-y-2">
-                                        {plan.allocation.slice(0, 3).map((item, idx) => (
-                                            <div key={idx} className="flex items-center text-[10px] text-gray-500">
-                                                <div className="w-2 h-2 rounded-full mr-1.5" style={{ backgroundColor: getColorForAsset(item.assetClass) }} />
-                                                {item.assetClass}
+                                    <div className="mt-4 grid grid-cols-2 gap-2">
+                                        {plan.allocation.map((item, idx) => (
+                                            <div key={idx} className="flex items-center justify-between text-xs text-gray-600 bg-gray-50 px-2 py-1.5 rounded-lg border border-gray-100">
+                                                <div className="flex items-center gap-2">
+                                                    <div className="w-2.5 h-2.5 rounded-full shadow-sm" style={{ backgroundColor: getColorForAsset(item.assetClass) }} />
+                                                    <span className="truncate max-w-[100px]">{item.assetClass}</span>
+                                                </div>
+                                                <span className="font-bold text-gray-900">{item.percentage}%</span>
                                             </div>
                                         ))}
-                                        {plan.allocation.length > 3 && (
-                                            <div className="flex items-center text-[10px] text-gray-400">
-                                                +{plan.allocation.length - 3} อื่นๆ
-                                            </div>
-                                        )}
                                     </div>
                                 </div>
 

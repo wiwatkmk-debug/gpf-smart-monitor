@@ -27,7 +27,7 @@ export default function PDFUpload({ onDataExtracted, onDataSaved }: PDFUploadPro
         setIsDragging(false);
     }, []);
 
-    const processPDF = async (file: File) => {
+    const processPDF = useCallback(async (file: File) => {
         setIsProcessing(true);
         setError(null);
         setExtractedData(null);
@@ -58,7 +58,7 @@ export default function PDFUpload({ onDataExtracted, onDataSaved }: PDFUploadPro
         } finally {
             setIsProcessing(false);
         }
-    };
+    }, [onDataExtracted]);
 
     const handleDrop = useCallback((e: React.DragEvent) => {
         e.preventDefault();
@@ -72,14 +72,14 @@ export default function PDFUpload({ onDataExtracted, onDataSaved }: PDFUploadPro
         } else {
             setError('กรุณาอัปโหลดไฟล์ PDF เท่านั้น');
         }
-    }, []);
+    }, [processPDF]);
 
     const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
             processPDF(file);
         }
-    }, []);
+    }, [processPDF]);
 
     const handleSaveData = async () => {
         if (!extractedData) return;

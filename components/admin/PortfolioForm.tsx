@@ -1,9 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Card from '../ui/Card';
+import Link from 'next/link';
 import ImageUpload from './ImageUpload';
-// import { extractDataFromImage } from '@/lib/image-processor'; // Deprecated: Moved to Server Action
 import type { Fund } from '@/types/portfolio';
 
 interface PortfolioFormProps {
@@ -30,7 +30,7 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
     };
 
     const [dataDate, setDataDate] = useState<string>(getValidDate(initialDataDate));
-    const [uploadedImage, setUploadedImage] = useState<string>('');
+    const [uploadedImage, setUploadedImage] = useState<File | null>(null);
     const [isExtracting, setIsExtracting] = useState(false);
     const [extractError, setExtractError] = useState<string>('');
     const [extractedData, setExtractedData] = useState<any>(null);
@@ -133,17 +133,42 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
         setExtractError('');
 
         try {
-            // Call Server Action instead of client-side function
-            const { extractPortfolioFromImage } = await import('@/app/actions/extract-portfolio');
-            const data = await extractPortfolioFromImage(uploadedImage);
+            const formData = new FormData();
+            formData.append('image', uploadedImage);
+
+            const response = await fetch('/api/ocr', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await response.json();
+
+            if (!response.ok) {
+                throw new Error(result.message || result.error || 'Failed to extract data');
+            }
+
+            const data = result.data.portfolioSnapshot; // Access nested data from API matching the structure
+
+            // Normalize data structure if needed
+            // The API returns { data: { portfolioSnapshot: { monthlySnapshots: [...] } } }
+            // But PortfolioForm expects a simpler structure or we iterate through snapshots.
+            // For "Current Snapshot", we take the first one or the latest one.
+
+            const latestSnapshot = data.monthlySnapshots[data.monthlySnapshots.length - 1];
+
+            // Transform to expected internal format
+            const mappedData = {
+                dataDate: latestSnapshot.date,
+                funds: latestSnapshot.funds
+            };
 
             // Store extracted data and show confirmation dialog
-            setExtractedData(data);
+            setExtractedData(mappedData);
             setShowConfirmDialog(true);
-            setIsExtracting(false);
         } catch (error) {
             console.error('Error extracting data:', error);
             setExtractError(error instanceof Error ? error.message : 'เกิดข้อผิดพลาดในการอ่านข้อมูล');
+        } finally {
             setIsExtracting(false);
         }
     };
@@ -247,12 +272,12 @@ export default function PortfolioForm({ initialData, initialDataDate, onSave, on
                                 <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>ข้อมูลถูกบันทึกเรียบร้อยแล้ว</p>
                             </div>
                         </div>
-                        <a
+                        <Link
                             href="/"
                             className="px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:opacity-90 transition-opacity"
                         >
                             🏠 กลับหน้าแรก
-                        </a>
+                        </Link>
                     </div>
                 </div>
             )}

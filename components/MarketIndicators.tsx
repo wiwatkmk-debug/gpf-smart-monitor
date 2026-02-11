@@ -15,7 +15,7 @@ export default function MarketIndicators({ indicators }: MarketIndicatorsProps) 
                 ตัวชี้วัดตลาดโลก
             </h3>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
                 {indicators.map((indicator) => (
                     <div
                         key={indicator.id}

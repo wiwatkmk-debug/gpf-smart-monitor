@@ -127,6 +127,9 @@ export default function AdminPage() {
                             className="px-4 py-2 glass rounded-lg hover:opacity-90 transition-opacity"
                             style={{ color: 'var(--text-primary)' }}
                         >
+                            <div className="absolute left-full ml-4 bg-gray-900 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
+                                Pro Member
+                            </div>
                             🏠 หน้าหลัก
                         </button>
                         <button

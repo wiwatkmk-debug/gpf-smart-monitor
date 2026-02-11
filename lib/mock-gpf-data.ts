@@ -124,5 +124,19 @@ export const MOCK_GPF_ACCOUNT: GPFAccount = {
     salary: 55000,
     startDate: '2015-01-01',
     holdings: [],
-    lastUpdated: new Date().toISOString()
+    lastUpdated: new Date().toISOString(),
+    history: [
+        { date: '2025-01-01', totalBalance: 1200000, holdings: [] },
+        { date: '2025-02-01', totalBalance: 1215000, holdings: [] },
+        { date: '2025-03-01', totalBalance: 1208000, holdings: [] },
+        { date: '2025-04-01', totalBalance: 1225000, holdings: [] },
+        { date: '2025-05-01', totalBalance: 1230000, holdings: [] },
+        { date: '2025-06-01', totalBalance: 1228000, holdings: [] },
+        { date: '2025-07-01', totalBalance: 1240000, holdings: [] },
+        { date: '2025-08-01', totalBalance: 1235000, holdings: [] },
+        { date: '2025-09-01', totalBalance: 1245000, holdings: [] },
+        { date: '2025-10-01', totalBalance: 1242000, holdings: [] },
+        { date: '2025-11-01', totalBalance: 1248000, holdings: [] },
+        { date: '2025-12-01', totalBalance: 1250000, holdings: [] }
+    ]
 };

@@ -39,6 +39,7 @@ export interface MarketIndicator {
     changePercent: number;
     lastUpdated?: Date;
     icon?: string;
+    isBond?: boolean;
 }
 
 export interface RebalancingRecommendation {

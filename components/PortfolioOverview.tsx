@@ -1,6 +1,4 @@
 import { PortfolioData } from '@/types/portfolio';
-import StatCard from './ui/StatCard';
-import { Wallet, TrendingUp, PiggyBank } from 'lucide-react';
 import { format } from 'date-fns';
 import { th } from 'date-fns/locale';
 
@@ -11,39 +9,24 @@ interface PortfolioOverviewProps {
 export default function PortfolioOverview({ portfolio }: PortfolioOverviewProps) {
     return (
         <div className="mb-6">
-            <div className="mb-4">
-                <h2 className="text-2xl font-bold mb-1" style={{ color: 'var(--text-primary)' }}>
-                    ภาพรวมพอร์ต
-                </h2>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    อัพเดทล่าสุด: {format(portfolio.lastUpdated, 'dd MMM yyyy HH:mm น.', { locale: th })}
-                </p>
-            </div>
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-500 rounded-3xl p-8 text-white shadow-xl relative overflow-hidden">
+                {/* Background Pattern */}
+                <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
+                <div className="absolute bottom-0 left-0 w-48 h-48 bg-black/10 rounded-full -ml-10 -mb-10 blur-xl"></div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                <StatCard
-                    title="มูลค่าพอร์ตรวม"
-                    value={`฿${portfolio.totalValue.toLocaleString('th-TH', { maximumFractionDigits: 0 })}`}
-                    icon={<Wallet className="w-5 h-5" />}
-                    className="col-span-1 md:col-span-2"
-                />
+                <div className="relative z-10 flex flex-col items-center justify-center text-center">
+                    <p className="text-emerald-100 text-lg mb-2 font-medium">มูลค่าเงินในบัญชี (บาท)</p>
+                    <h1 className="text-5xl md:text-6xl font-bold mb-4 tracking-tight drop-shadow-sm">
+                        {portfolio.totalValue.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    </h1>
 
-                <StatCard
-                    title="การเปลี่ยนแปลงวันนี้"
-                    value={`฿${Math.abs(portfolio.todayChange).toLocaleString('th-TH', { maximumFractionDigits: 0 })}`}
-                    change={portfolio.todayChange}
-                    changePercent={portfolio.todayChangePercent}
-                    icon={<TrendingUp className="w-5 h-5" />}
-                    trend={portfolio.todayChange >= 0 ? 'up' : 'down'}
-                />
-
-                <StatCard
-                    title="ผลตอบแทนรวม"
-                    value={`฿${Math.abs(portfolio.totalReturn).toLocaleString('th-TH', { maximumFractionDigits: 0 })}`}
-                    changePercent={portfolio.totalReturnPercent}
-                    icon={<PiggyBank className="w-5 h-5" />}
-                    trend={portfolio.totalReturn >= 0 ? 'up' : 'down'}
-                />
+                    <div className="flex items-center gap-2 bg-white/20 px-4 py-1.5 rounded-full">
+                        <span className="text-emerald-50 text-sm">ข้อมูล ณ วันที่</span>
+                        <span className="text-white font-medium text-sm">
+                            {format(portfolio.lastUpdated, 'd MMM yyyy', { locale: th })}
+                        </span>
+                    </div>
+                </div>
             </div>
         </div>
     );

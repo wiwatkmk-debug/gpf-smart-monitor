@@ -1,4 +1,6 @@
 export interface FundHolding {
+    fundCode: string;
+    fundName: string;
     name: string;
     value: number;
     units: number;

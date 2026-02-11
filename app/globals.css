@@ -1,8 +1,5 @@
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
-
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
 :root {
   /* Color Palette */
@@ -76,13 +73,10 @@ body {
   max-width: 100vw;
   overflow-x: hidden;
   font-family: 'Noto Sans Thai', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg-primary);
-  color: var(--text-primary);
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
-  background: var(--gradient-bg);
   min-height: 100vh;
 }
 
@@ -112,7 +106,7 @@ a {
 .card {
   background: var(--bg-card);
   border-radius: 16px;
-  padding: 24px;
+  padding: 30px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-md);
   transition: all 0.3s ease;
@@ -127,7 +121,7 @@ a {
 .stat-card {
   background: var(--bg-card);
   border-radius: 12px;
-  padding: 20px;
+  padding: 30px;
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
   transition: all 0.3s ease;

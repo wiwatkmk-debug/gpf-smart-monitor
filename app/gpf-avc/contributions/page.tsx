@@ -24,7 +24,7 @@ export default function ContributionsPage() {
     };
 
     return (
-        <div className="p-6 space-y-6">
+        <div className="py-6 flex flex-col gap-6" style={{ paddingLeft: '30px', paddingRight: '30px' }}>
             {/* Header */}
             <div className="flex items-center gap-4 mb-6">
                 <Link href="/gpf-avc" className="p-2 hover:bg-gray-100 rounded-full transition-colors">
@@ -36,9 +36,9 @@ export default function ContributionsPage() {
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Left: Monthly Contribution */}
-                <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                <div className="card">
                     <div className="flex items-center gap-3 mb-6">
                         <div className="p-2 bg-blue-100 rounded-lg text-blue-600">
                             <DollarSign className="w-6 h-6" />
@@ -89,9 +89,9 @@ export default function ContributionsPage() {
                 </div>
 
                 {/* Right: Lump Sum & Tax */}
-                <div className="space-y-6">
+                <div className="flex flex-col gap-6">
                     {/* Lump Sum */}
-                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                    <div className="card">
                         <div className="flex items-center gap-3 mb-6">
                             <div className="p-2 bg-green-100 rounded-lg text-green-600">
                                 <Save className="w-6 h-6" />
@@ -117,7 +117,7 @@ export default function ContributionsPage() {
                     </div>
 
                     {/* Tax Benefit Simulation */}
-                    <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-lg p-6 text-white">
+                    <div className="bg-gradient-to-br from-indigo-600 to-purple-700 rounded-xl shadow-lg text-white" style={{ padding: '24px' }}>
                         <div className="flex items-center gap-2 mb-4">
                             <Calculator className="w-5 h-5 text-indigo-200" />
                             <h2 className="font-bold text-lg">ประมาณการลดหย่อนภาษี</h2>
@@ -128,11 +128,11 @@ export default function ContributionsPage() {
                                 <span>ยอดออมทั้งปี (รายเดือน + พิเศษ):</span>
                                 <span>฿{annualContribution.toLocaleString()}</span>
                             </div>
-                            <div className="flex justify-between items-end">
+                            <div className="flex justify-between items-end mt-2">
                                 <span className="text-indigo-200 text-sm">ประหยัดภาษีได้ประมาณ:*</span>
                                 <span className="text-3xl font-bold text-white">฿{taxSaving.toLocaleString()}</span>
                             </div>
-                            <p className="text-[10px] text-indigo-300 mt-2">
+                            <p className="text-[10px] text-indigo-300 mt-3 pt-2 border-t border-indigo-400/30">
                                 * คำนวณเบื้องต้นที่ฐานภาษี {taxBracket * 100}% ตัวเลขจริงอาจเปลี่ยนแปลงตามรายได้และการลดหย่อนอื่นๆ
                             </p>
                         </div>
